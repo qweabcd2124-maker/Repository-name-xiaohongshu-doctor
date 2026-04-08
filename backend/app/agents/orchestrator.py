@@ -15,7 +15,7 @@ from typing import Optional, Callable, Awaitable, Any
 from app.analysis.text_analyzer import TextAnalyzer
 from app.analysis.image_analyzer import ImageAnalyzer
 from app.baseline.comparator import BaselineComparator
-from app.agents.base_agent import MODEL_PRO
+from app.agents.base_agent import MODEL_PRO, MODEL_FAST
 from app.agents.research_data import pre_score
 from app.agents.content_agent import ContentAgent
 from app.agents.visual_agent import VisualAgent
@@ -219,25 +219,46 @@ class Orchestrator:
         logger.info("Round 1 诊断耗时 %.1fs，tokens=%d", time.time() - t1, round1_tokens)
         await _emit_progress("round1_done", "专家诊断完成，进入辩论环节")
 
-        # --- Step 4: Agent 辩论（Round 2）---
-        await _emit_progress("debate_start", "专家正在互相质疑与补充...")
+        # --- Step 4+5: 辩论 + 裁判并行 ---
+        await _emit_progress("debate_start", "专家辩论与综合裁判同步进行...")
         t2 = time.time()
         agents_list = [content_agent, visual_agent, growth_agent, user_sim_agent]
-        debate_records, debate_tokens = await self._run_debate(agent_opinions, agents_list)
-        logger.info("辩论耗时 %.1fs，tokens=%d", time.time() - t2, debate_tokens)
-        await _emit_progress("debate_done", "辩论完成，进入综合裁判")
 
-        # --- Step 5: 综合裁判 ---
-        await _emit_progress("judge_start", "综合裁判正在汇总全部意见...")
-        t3 = time.time()
+        # Run debate and judge in parallel (judge uses Round 1 opinions directly)
         judge = JudgeAgent(model=MODEL_PRO)
-        final_report = await judge.diagnose(
-            title=title, category=category,
-            agent_opinions=agent_opinions, debate_records=debate_records,
+
+        async def _debate_task():
+            return await self._run_debate(agent_opinions, agents_list)
+
+        async def _judge_task():
+            return await judge.diagnose(
+                title=title, category=category,
+                agent_opinions=agent_opinions, debate_records=None,
+            )
+
+        (debate_result, judge_result) = await asyncio.gather(
+            _debate_task(), _judge_task(), return_exceptions=True,
         )
+
+        # Process debate
+        debate_records = []
+        debate_tokens = 0
+        if not isinstance(debate_result, Exception):
+            debate_records, debate_tokens = debate_result
+        else:
+            logger.warning("辩论异常，跳过: %s", debate_result)
+
+        # Process judge
+        if isinstance(judge_result, Exception):
+            logger.error("裁判异常: %s", judge_result)
+            final_report = {"overall_score": 50, "grade": "C", "issues": [{"severity": "high", "description": str(judge_result), "from_agent": "system"}], "suggestions": [], "debate_summary": "裁判失败"}
+        else:
+            final_report = judge_result
+
         judge_meta = final_report.pop("_meta", None)
         judge_tokens = judge_meta.get("total_tokens", 0) if judge_meta else 0
-        logger.info("裁判耗时 %.1fs，tokens=%d", time.time() - t3, judge_tokens)
+        logger.info("辩论+裁判并行耗时 %.1fs，debate_tokens=%d, judge_tokens=%d",
+                     time.time() - t2, debate_tokens, judge_tokens)
         await _emit_progress("judge_done", "裁判评定完成，正在整理报告")
 
         # --- Step 6: 组装响应 ---
@@ -263,12 +284,22 @@ class Orchestrator:
     async def _run_debate(self, opinions: list[dict], agents: list) -> tuple[list[dict], int]:
         debate_tasks = []
         for i, agent in enumerate(agents):
-            other_opinions = [op for j, op in enumerate(opinions) if j != i]
-            other_text = json.dumps(other_opinions, ensure_ascii=False, indent=2)
+            # Only pass essential fields to speed up debate
+            other_opinions = []
+            for j, op in enumerate(opinions):
+                if j != i:
+                    other_opinions.append({
+                        "agent_name": op.get("agent_name", ""),
+                        "dimension": op.get("dimension", ""),
+                        "score": op.get("score", 0),
+                        "issues": op.get("issues", [])[:3],
+                        "suggestions": op.get("suggestions", [])[:3],
+                    })
+            other_text = json.dumps(other_opinions, ensure_ascii=False)
             prompt = DEBATE_PROMPT.format(
                 agent_name=agent.agent_name, other_opinions=other_text,
             )
-            debate_tasks.append(agent.call_llm(prompt, system_override=agent.system_prompt))
+            debate_tasks.append(agent.call_llm(prompt, system_override=agent.system_prompt, model_override=MODEL_FAST, max_tokens=1024))
 
         results = await asyncio.gather(*debate_tasks, return_exceptions=True)
         debate_records = []

@@ -98,6 +98,18 @@ const TIPS: Record<string, string[]> = {
   ],
 };
 
+/* ── Fun facts that rotate during wait ── */
+const FUN_FACTS = [
+  { q: "小红书互动量最高的一条笔记有多少互动？", a: "270,670！标题只用了情感+好奇心" },
+  { q: "凌晨 3 点和下午 5 点发笔记，互动量差多少倍？", a: "5,658 倍！同样的内容，发布时间决定生死" },
+  { q: "穿搭品类，文字能解释多少互动差异？", a: "只有 1.7%！剩余 98.3% 靠图片说话" },
+  { q: "有一条没有标题的笔记，互动量是多少？", a: "55,637！纯靠封面图的力量" },
+  { q: "评论区最高赞的一条评论有多少赞？", a: "39,000 赞！比绝大多数笔记还火" },
+  { q: "钩子元素越多越好吗？", a: "不是！3个最佳，4个反而崩塌到只有 5,826" },
+  { q: "我们分析了多少条真实评论？", a: "2,465 条，AI 分类成 6 种用户类型" },
+  { q: "科技品类头部笔记是均值的多少倍？", a: "24.4 倍！赢家通吃最严重的品类" },
+];
+
 const CATEGORY_LABEL: Record<string, string> = {
   food: "美食", fashion: "穿搭", tech: "科技",
   travel: "旅行", beauty: "美妆", fitness: "健身",
@@ -142,6 +154,8 @@ export default function Diagnosing() {
   const [step, setStep] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [factIdx, setFactIdx] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
   const [preScoreData, setPreScoreData] = useState<PreScoreResult | null>(null);
   const [streamMsg, setStreamMsg] = useState<string>("");
   const apiDone = useRef(false);
@@ -249,6 +263,7 @@ export default function Diagnosing() {
 
     const tipTimer = setInterval(() => setTipIdx((p) => (p + 1) % tips.length), 4500);
     const clockTimer = setInterval(() => setElapsed((p) => p + 1), 1000);
+    const factTimer = setInterval(() => { setFactIdx((p) => (p + 1) % FUN_FACTS.length); setShowAnswer(false); }, 8000);
 
     // Timeout: 90s fallback
     const timeoutTimer = setTimeout(() => {
@@ -259,7 +274,7 @@ export default function Diagnosing() {
       }
     }, 90000);
 
-    return () => { cancelled = true; clearInterval(stepTimer); clearInterval(tipTimer); clearInterval(clockTimer); clearTimeout(timeoutTimer); };
+    return () => { cancelled = true; clearInterval(stepTimer); clearInterval(tipTimer); clearInterval(clockTimer); clearInterval(factTimer); clearTimeout(timeoutTimer); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!params) return null;
@@ -482,6 +497,40 @@ export default function Diagnosing() {
               </Typography>
             </motion.div>
           </AnimatePresence>
+        </Box>
+
+        {/* ── Fun fact quiz ── */}
+        <Box
+          sx={{
+            gridColumn: { xs: "1", md: "1 / -1" },
+            bgcolor: "#fff", border: "1px solid #f0f0f0", borderRadius: "12px",
+            px: { xs: 2, md: 2.5 }, py: 2, cursor: "pointer",
+            transition: "border-color 0.2s",
+            "&:hover": { borderColor: "#ff2442" },
+          }}
+          onClick={() => setShowAnswer(true)}
+        >
+          <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#ff2442", mb: 0.5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            {showAnswer ? "答案" : "猜一猜"}
+          </Typography>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${factIdx}-${showAnswer}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.25 }}
+            >
+              <Typography sx={{ fontSize: 14, fontWeight: showAnswer ? 700 : 500, color: showAnswer ? "#ff2442" : "#262626", lineHeight: 1.6 }}>
+                {showAnswer ? FUN_FACTS[factIdx].a : FUN_FACTS[factIdx].q}
+              </Typography>
+            </motion.div>
+          </AnimatePresence>
+          {!showAnswer && (
+            <Typography sx={{ fontSize: 11, color: "#ccc", mt: 0.5 }}>
+              点击揭晓答案
+            </Typography>
+          )}
         </Box>
       </Box>
     </Box>
