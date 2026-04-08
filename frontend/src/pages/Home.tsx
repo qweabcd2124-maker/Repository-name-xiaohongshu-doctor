@@ -1,40 +1,39 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Box, Typography, TextField, Button, Stack, Chip,
-  CircularProgress, Alert, Paper, Stepper, Step, StepLabel, useTheme,
+  CircularProgress, Alert, Paper, useTheme,
   useMediaQuery,
 } from "@mui/material";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
 import CategoryPicker from "../components/CategoryPicker";
 import UploadZone from "../components/UploadZone";
 import { quickRecognize } from "../utils/api";
 import type { QuickRecognizeResult } from "../utils/api";
-
-type UploadStage = "core" | "cover" | "details" | "profile" | "comments";
-const GUIDE_STAGE_ORDER: UploadStage[] = ["core", "cover", "details", "profile", "comments"];
 
 /** @returns A stable key for a File object */
 function fkey(f: File) {
   return `${f.name}_${f.size}_${f.lastModified}`;
 }
 
-/** 中文垂类 → 英文 key 映射 */
+/** 中文垂类 -> 英文 key 映射 */
 const CAT_MAP: Record<string, string> = {
-  "美食": "food", "穿搭": "fashion", "科技": "tech", "数码": "tech",
-  "旅行": "travel", "旅游": "travel", "美妆": "beauty",
-  "健身": "fitness", "运动": "fitness",
+  "美食": "food",
+  "穿搭": "fashion",
+  "科技": "tech",
+  "数码": "tech",
+  "旅行": "travel",
+  "旅游": "travel",
+  "美妆": "beauty",
+  "健身": "fitness",
+  "运动": "fitness",
 };
 
-const WIZARD_LABELS = ["上传核心内容", "确认并完善信息"];
 
-/**
- * 首页：移动端为两步向导（上传后自动进入填写页，可返回）；桌面端为双栏卡片 + 固定视口，表单区内部滚动。
- */
+/** 首页：桌面端双栏布局，移动端单页布局 */
 export default function Home() {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -50,27 +49,20 @@ export default function Home() {
   const [aiSuggestion, setAiSuggestion] = useState("");
   const [uploadingPulse, setUploadingPulse] = useState(false);
   const [analyzingPulse, setAnalyzingPulse] = useState(false);
-  const [fileStageMap, setFileStageMap] = useState<Record<string, UploadStage>>({});
-  const [activeUploadStage, setActiveUploadStage] = useState<UploadStage>("core");
 
   const [userEdited, setUserEdited] = useState({ title: false, content: false, category: false });
 
-  /** 移动端分步：`auto` 上传后自动进第 2 步；`hold` 用户点「返回」后暂停自动跳转 */
-  const [wizardStep, setWizardStep] = useState(0);
-  const [wizardHold, setWizardHold] = useState(false);
-  const autoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const analyzePulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognizeInFlightRef = useRef<Set<string>>(new Set());
   const prevPendingRecognitionRef = useRef(false);
 
-  useEffect(() => { document.title = "薯医 NoteRx"; }, []);
+  useEffect(() => { document.title = "启医 NoteRx"; }, []);
 
   useEffect(() => {
     return () => {
       if (uploadPulseTimerRef.current) clearTimeout(uploadPulseTimerRef.current);
       if (analyzePulseTimerRef.current) clearTimeout(analyzePulseTimerRef.current);
-      if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
     };
   }, []);
 
@@ -83,45 +75,21 @@ export default function Home() {
     }, 500);
   }, []);
 
-  const activeStageFiles = useMemo(
-    () => files.filter((f) => (fileStageMap[fkey(f)] ?? "core") === activeUploadStage),
-    [files, fileStageMap, activeUploadStage],
-  );
-
   const handleFilesChange = useCallback(
     (newFiles: File[]) => {
-      const trimmed = newFiles.slice(0, 9);
-      setFiles((prev) => {
-        const next = [
-          ...prev.filter((f) => (fileStageMap[fkey(f)] ?? "core") !== activeUploadStage),
-          ...trimmed,
-        ];
-        return next;
-      });
-      setFileStageMap((prev) => {
-        const next: Record<string, UploadStage> = {};
-        for (const file of files) {
-          const key = fkey(file);
-          const stage = prev[key] ?? "core";
-          if (stage !== activeUploadStage) next[key] = stage;
-        }
-        for (const file of trimmed) {
-          next[fkey(file)] = activeUploadStage;
-        }
-        return next;
-      });
+      setFiles(newFiles.slice(0, 9));
       if (newFiles.length > 0) triggerUploadPulse();
     },
-    [files, fileStageMap, activeUploadStage, triggerUploadPulse],
+    [triggerUploadPulse],
   );
 
   const appendFiles = useCallback(
     (incoming: File[]) => {
       if (incoming.length === 0) return;
-      const nextStageFiles = [...activeStageFiles, ...incoming].slice(0, 9);
-      handleFilesChange(nextStageFiles);
+      setFiles((prev) => [...prev, ...incoming].slice(0, 9));
+      triggerUploadPulse();
     },
-    [activeStageFiles, handleFilesChange],
+    [triggerUploadPulse],
   );
 
   /** Ctrl+V paste images */
@@ -159,28 +127,27 @@ export default function Home() {
     let bestCategory = "";
     let bestSummary = "";
 
-    for (const [key, r] of successRecogEntries) {
-      const stage = fileStageMap[key] ?? "core";
-      if (stage === "details") {
+    for (const [, r] of successRecogEntries) {
+      if (r.slot_type === "content") {
         if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
         if (!bestContent && r.content_text?.trim()) bestContent = r.content_text.trim();
       }
-      if (stage !== "core") {
-        if (!bestCategory && r.category?.trim()) bestCategory = r.category.trim();
-        if (!bestSummary && r.summary?.trim()) bestSummary = r.summary.trim();
+      if (!bestCategory && r.category?.trim()) bestCategory = r.category.trim();
+      if (!bestSummary && r.summary?.trim()) bestSummary = r.summary.trim();
+    }
+    if (!bestTitle || !bestContent) {
+      for (const [, r] of successRecogEntries) {
+        if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
+        if (!bestContent && r.content_text?.trim()) bestContent = r.content_text.trim();
       }
     }
 
     return { bestTitle, bestContent, bestCategory, bestSummary };
-  }, [successRecogEntries, fileStageMap]);
+  }, [successRecogEntries]);
 
   const imageFileKeys = useMemo(
-    () => new Set(
-      files
-        .filter((f) => f.type.startsWith("image/") && (fileStageMap[fkey(f)] ?? "core") !== "core")
-        .map(fkey),
-    ),
-    [files, fileStageMap],
+    () => new Set(files.filter((f) => f.type.startsWith("image/")).map(fkey)),
+    [files],
   );
 
   const pendingRecognition = useMemo(() => {
@@ -259,15 +226,6 @@ export default function Home() {
 
   useEffect(() => {
     const validKeys = new Set(files.map(fkey));
-    setFileStageMap((prev) => {
-      let changed = false;
-      const next: Record<string, UploadStage> = {};
-      Object.entries(prev).forEach(([key, value]) => {
-        if (validKeys.has(key)) next[key] = value;
-        else changed = true;
-      });
-      return changed ? next : prev;
-    });
     setAiRecogs((prev) => {
       let changed = false;
       const next: Record<string, QuickRecognizeResult> = {};
@@ -292,23 +250,14 @@ export default function Home() {
   }, [files]);
 
   useEffect(() => {
-    const slotHintByStage: Record<UploadStage, "cover" | "content" | "profile" | "comments" | undefined> = {
-      core: undefined,
-      cover: "cover",
-      details: "content",
-      profile: "profile",
-      comments: "comments",
-    };
     files.forEach((file) => {
       if (!file.type.startsWith("image/")) return;
       const key = fkey(file);
-      const stage = fileStageMap[key] ?? "core";
-      if (stage === "core") return;
       if (!aiRecogs[key] && !aiLoading[key]) {
-        void runRecognition(file, slotHintByStage[stage]);
+        void runRecognition(file);
       }
     });
-  }, [files, fileStageMap, aiRecogs, aiLoading, runRecognition]);
+  }, [files, aiRecogs, aiLoading, runRecognition]);
 
   useEffect(() => {
     if (!prevPendingRecognitionRef.current && pendingRecognition && analyzePulseTimerRef.current) {
@@ -330,33 +279,25 @@ export default function Home() {
   useEffect(() => {
     const recognizedSlots = new Set(
       successRecogEntries
-        .filter(([key]) => (fileStageMap[key] ?? "core") !== "core")
         .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type : ""))
         .filter(Boolean),
     );
-    const hasCoreContent = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "core");
-    const hasCover = hasCoreContent && (
-      files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "cover")
-      || files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "core" && (f.type.startsWith("video/") || f.type.startsWith("image/")))
-      ||
-      recognizedSlots.has("cover")
-    );
+    const hasAny = files.length > 0;
     const hasBody = Boolean(content.trim() || aggregated.bestContent);
-    const hasProfile = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "profile") || recognizedSlots.has("profile");
-    const hasComments = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "comments") || recognizedSlots.has("comments");
+    const hasCover = recognizedSlots.has("cover");
+    const hasProfile = recognizedSlots.has("profile");
+    const hasComments = recognizedSlots.has("comments");
 
-    if (!hasCoreContent) setAiSuggestion("");
-    else if (!hasCover) setAiSuggestion("第 2 步建议补一张封面截图（可选），可提升封面维度判断。");
-    else if (!hasBody) setAiSuggestion("第 3 步请上传笔记详情截图，AI 会提取标题和正文供你确认。");
-    else if (!hasProfile) setAiSuggestion("第 4 步可补充主页截图，帮助判断账号定位和权重。");
-    else if (!hasComments) setAiSuggestion("第 5 步可补充评论区截图，分析互动质量与争议点。");
-    else setAiSuggestion("核心信息已较完整，可以直接开始诊断。");
-  }, [files, fileStageMap, successRecogEntries, content, aggregated.bestContent]);
+    if (!hasAny) setAiSuggestion("");
+    else if (!hasBody) setAiSuggestion("AI 尚未识别到笔记正文，建议补充包含标题/正文/标签的截图。");
+    else if (!hasCover) setAiSuggestion("可补充封面截图，提升视觉内容判断。");
+    else if (!hasProfile) setAiSuggestion("可补充主页截图，帮助判断账号定位。");
+    else if (!hasComments) setAiSuggestion("可补充评论区截图，分析互动质量。");
+    else setAiSuggestion("信息较完整，可以直接开始诊断。");
+  }, [files.length, successRecogEntries, content, aggregated.bestContent]);
 
   useEffect(() => {
     if (files.length === 0) {
-      setFileStageMap({});
-      setActiveUploadStage("core");
       setAiRecogs({});
       setAiLoading({});
       recognizeInFlightRef.current.clear();
@@ -364,8 +305,6 @@ export default function Home() {
       setTitle("");
       setContent("");
       setCategory("food");
-      setWizardStep(0);
-      setWizardHold(false);
       setUploadingPulse(false);
       setAnalyzingPulse(false);
       if (uploadPulseTimerRef.current) {
@@ -379,55 +318,26 @@ export default function Home() {
     }
   }, [files.length]);
 
-  /** 移动端：有素材且未暂停时，延迟自动进入第二步 */
-  useEffect(() => {
-    if (isDesktop) return;
-    if (autoTimerRef.current) {
-      clearTimeout(autoTimerRef.current);
-      autoTimerRef.current = null;
-    }
-    if (files.length === 0 || wizardHold || wizardStep !== 0) return;
-    autoTimerRef.current = setTimeout(() => {
-      setWizardStep(1);
-      autoTimerRef.current = null;
-    }, 480);
-    return () => {
-      if (autoTimerRef.current) {
-        clearTimeout(autoTimerRef.current);
-        autoTimerRef.current = null;
-      }
-    };
-  }, [files.length, wizardHold, wizardStep, isDesktop]);
-
   const processingStatus = useMemo(() => {
     if (files.length === 0) return null;
     if (uploadingPulse) {
       return { label: "上传中", tone: "info" as const, text: "素材已接收，正在准备识别..." };
     }
     if (pendingRecognition) {
-      const stageText = activeUploadStage === "cover"
-        ? "AI 正在识别封面信息..."
-        : activeUploadStage === "details"
-          ? "AI 正在识别笔记详情（标题/正文）..."
-          : activeUploadStage === "profile"
-            ? "AI 正在识别主页信息..."
-            : activeUploadStage === "comments"
-              ? "AI 正在识别评论区信息..."
-              : "AI 正在识别当前阶段素材...";
-      return { label: "识别中", tone: "info" as const, text: stageText };
+      return { label: "识别中", tone: "info" as const, text: "AI 正在自动识别封面/详情/主页/评论区..." };
     }
     if (analyzingPulse) {
       return { label: "分析中", tone: "info" as const, text: "正在汇总识别结果并回填表单..." };
     }
     if (allRecognitionDone) {
-      return { label: "已就绪", tone: "success" as const, text: "识别完成，可继续发起诊断。" };
+      return { label: "已就绪", tone: "success" as const, text: "识别完成，可以继续发起诊断。" };
     }
     return null;
-  }, [files.length, uploadingPulse, pendingRecognition, analyzingPulse, allRecognitionDone, activeUploadStage]);
+  }, [files.length, uploadingPulse, pendingRecognition, analyzingPulse, allRecognitionDone]);
 
   const lockInputs = !!processingStatus && processingStatus.label !== "已就绪";
-
-  const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs;
+  const isFormBlocked = files.length > 0 && !allRecognitionDone;
+  const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs && !isFormBlocked;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -444,38 +354,16 @@ export default function Home() {
   const recognizedSlots = useMemo(
     () => new Set(
       successRecogEntries
-        .filter(([key]) => (fileStageMap[key] ?? "core") !== "core")
         .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type : ""))
         .filter(Boolean),
     ),
-    [successRecogEntries, fileStageMap],
+    [successRecogEntries],
   );
-  const guideSteps = ["上传核心内容", "上传封面（可选）", "上传笔记详情", "补充主页", "补充评论区"];
-  const guideDone = useMemo(() => {
-    const hasCore = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "core");
-    const hasCover = hasCore && (
-      files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "cover")
-      || recognizedSlots.has("cover")
-      || files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "core" && (f.type.startsWith("video/") || f.type.startsWith("image/")))
-    );
-    const hasBody = Boolean(content.trim() || aggregated.bestContent);
-    const hasProfile = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "profile") || recognizedSlots.has("profile");
-    const hasComments = files.some((f) => (fileStageMap[fkey(f)] ?? "core") === "comments") || recognizedSlots.has("comments");
-    return [hasCore, hasCover, hasBody, hasProfile, hasComments];
-  }, [files, fileStageMap, recognizedSlots, content, aggregated.bestContent]);
-  const currentGuideIndex = useMemo(() => {
-    const nextPending = guideDone.findIndex((x) => !x);
-    return nextPending === -1 ? guideSteps.length - 1 : nextPending;
-  }, [guideDone, guideSteps.length]);
-
-  const handleWizardBack = () => {
-    setWizardStep(0);
-    setWizardHold(true);
-  };
-
-  const handleWizardContinue = () => {
-    setWizardHold(false);
-    setWizardStep(1);
+  const slotLabelMap: Record<string, string> = {
+    content: "详情",
+    cover: "封面",
+    profile: "主页",
+    comments: "评论区",
   };
 
   const guideCard = (
@@ -491,11 +379,11 @@ export default function Home() {
     >
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.9 }}>
         <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#111827", fontWeight: 700 }}>
-          阶段上传
+          一次上传自动分拣
         </Typography>
         <Chip
           size="small"
-          label={`推荐：${guideSteps[currentGuideIndex]}`}
+          label={`${files.length}/9`}
           sx={{
             height: 24,
             fontSize: { xs: 10, md: 10 },
@@ -506,42 +394,21 @@ export default function Home() {
           }}
         />
       </Box>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" }, gap: 0.75 }}>
-        {GUIDE_STAGE_ORDER.map((stage, idx) => (
-          <Button
-            key={stage}
-            variant={activeUploadStage === stage ? "contained" : "outlined"}
+      <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#4b5563", lineHeight: 1.6 }}>
+        把视频和图片一次性上传，AI 会自动识别并区分封面、笔记详情、主页和评论区。
+      </Typography>
+      <Box sx={{ mt: 0.8, display: "flex", flexWrap: "wrap", gap: 0.7 }}>
+        {Object.entries(slotLabelMap).map(([slot, label]) => (
+          <Chip
+            key={slot}
             size="small"
-            onClick={() => setActiveUploadStage(stage)}
-            sx={{
-              borderRadius: "10px",
-              fontSize: { xs: 11, md: 10 },
-              fontWeight: 700,
-              py: 0.6,
-              minHeight: 34,
-              textTransform: "none",
-              borderColor: activeUploadStage === stage ? "transparent" : "rgba(0,0,0,0.12)",
-              bgcolor: activeUploadStage === stage ? "#2563eb" : "rgba(255,255,255,0.95)",
-              color: activeUploadStage === stage ? "#fff" : "#374151",
-              boxShadow: activeUploadStage === stage ? "0 6px 16px rgba(37,99,235,0.24)" : "none",
-              "&:hover": {
-                borderColor: activeUploadStage === stage ? "transparent" : "rgba(0,0,0,0.2)",
-                bgcolor: activeUploadStage === stage ? "#1d4ed8" : "rgba(249,250,251,0.95)",
-              },
-            }}
-          >
-            {`${idx + 1}. ${guideSteps[idx]}`}
-          </Button>
+            label={label}
+            color={recognizedSlots.has(slot) ? "success" : "default"}
+            variant={recognizedSlots.has(slot) ? "filled" : "outlined"}
+            sx={{ fontSize: 11, height: 24 }}
+          />
         ))}
       </Box>
-      <Typography sx={{ mt: 0.8, fontSize: { xs: 11, md: 10 }, color: "#6b7280", lineHeight: 1.5 }}>
-        当前阶段：{guideSteps[GUIDE_STAGE_ORDER.indexOf(activeUploadStage)]}。上传的素材只会归属这个阶段。
-      </Typography>
-      {activeUploadStage !== "details" && (
-        <Typography sx={{ mt: 0.35, fontSize: { xs: 11, md: 10 }, color: "#b45309", lineHeight: 1.5, fontWeight: 600 }}>
-          提示：标题/正文只会从「3. 上传笔记详情」阶段的截图中提取。
-        </Typography>
-      )}
     </Box>
   );
 
@@ -572,17 +439,16 @@ export default function Home() {
         {anyLoading && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: successResults.length > 0 ? 1 : 0 }}>
             <CircularProgress size={14} thickness={5} sx={{ color: "#ff2442" }} />
-            <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#999" }}>AI 正在识别标题、正文、垂类...</Typography>
+            <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#999" }}>AI 正在识别标题、正文和内容类型...</Typography>
           </Box>
         )}
         {allFailed && (
           <Box>
             <Typography sx={{ fontSize: { xs: 12, md: 11 }, fontWeight: 600, color: "#92400e", mb: 0.5 }}>
-              当前素材的 AI 快识全部失败
+              当前素材的 AI 快速识别全部失败
             </Typography>
             <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#a16207", lineHeight: 1.65 }}>
-              多数是「后端没开」或「Key 失效」：请先保证本机 <code style={{ fontSize: "0.9em" }}>uvicorn</code> 在 8000 端口运行（与前端 <code style={{ fontSize: "0.9em" }}>/api</code> 代理一致），再检查 <code style={{ fontSize: "0.9em" }}>backend/.env</code> 里的
-              OPENAI_API_KEY。也可在开发者工具 Network 中查看 quick-recognize 是否 502/401。若暂时无法识别，可手动填标题后继续诊断。
+              常见原因是后端未启动或 Key 无效。请确认本机 `uvicorn` 在 `8000` 端口运行，并检查 `backend/.env` 中的 `OPENAI_API_KEY`。若暂时无法识别，也可手动补充后继续诊断。
             </Typography>
           </Box>
         )}
@@ -592,7 +458,7 @@ export default function Home() {
               <Chip
                 key={i}
                 icon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
-                label={r.category ? `${r.category}${r.summary ? ` · ${r.summary.slice(0, 20)}` : ""}` : r.summary?.slice(0, 30)}
+                label={r.category ? `${r.category}${r.summary ? ` 路 ${r.summary.slice(0, 20)}` : ""}` : r.summary?.slice(0, 30)}
                 size="small"
                 sx={{
                   bgcolor: "rgba(16, 185, 129, 0.1)",
@@ -608,7 +474,7 @@ export default function Home() {
         )}
         {aiSuggestion && !allFailed && (
           <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#4b5563", lineHeight: 1.55 }}>
-            <Box component="span" sx={{ mr: 0.5 }} aria-hidden>✨</Box>
+            <Box component="span" sx={{ mr: 0.5 }} aria-hidden>✓</Box>
             {aiSuggestion}
           </Typography>
         )}
@@ -627,13 +493,13 @@ export default function Home() {
           disabled={lockInputs}
           value={title}
           onChange={(e) => { setTitle(e.target.value); setUserEdited((p) => ({ ...p, title: true })); }}
-          placeholder="上传核心素材后 AI 自动识别，也可手动输入"
+          placeholder="上传后 AI 会自动识别，也可手动输入"
           slotProps={{ htmlInput: { maxLength: 100 } }}
-          helperText={lockInputs ? "AI 处理中，识别完成后会自动回填标题" : autoFilled.title ? "✅ AI 已自动识别填充，可自行修改" : `${title.length}/100`}
+          helperText={lockInputs ? "AI 处理中，识别完成后会自动回填标题" : autoFilled.title ? "✓ AI 已自动回填，可自行修改" : `${title.length}/100`}
         />
         {showWarnings && warnings.title && !title.trim() && !userEdited.title && (
           <Alert severity="warning" icon={<WarningAmberIcon fontSize="small" />} sx={{ mt: 0.5, py: 0, fontSize: 11 }}>
-            AI 未从图片中识别到笔记标题，请手动输入
+            AI 未从图片中识别到标题，请手动输入
           </Alert>
         )}
       </Box>
@@ -647,12 +513,12 @@ export default function Home() {
           disabled={lockInputs}
           value={content}
           onChange={(e) => { setContent(e.target.value); setUserEdited((p) => ({ ...p, content: true })); }}
-          placeholder="上传核心素材后 AI 自动提取正文，也可手动补充"
-          helperText={lockInputs ? "AI 处理中，识别完成后会自动回填正文" : autoFilled.content ? "✅ AI 已自动提取正文，可自行修改" : undefined}
+          placeholder="上传后 AI 会自动提取正文（包含标签）"
+          helperText={lockInputs ? "AI 处理中，识别完成后会自动回填正文" : autoFilled.content ? "✓ AI 已自动提取正文，可自行修改" : undefined}
         />
         {showWarnings && warnings.content && !content.trim() && !userEdited.content && (
           <Alert severity="warning" icon={<WarningAmberIcon fontSize="small" />} sx={{ mt: 0.5, py: 0, fontSize: 11 }}>
-            AI 未提取到正文，可上传正文截图或手动输入
+            AI 未提取到正文，可补充详情截图或手动输入
           </Alert>
         )}
       </Box>
@@ -703,31 +569,8 @@ export default function Home() {
     </Button>
   );
 
-  const stepHeader = (
-    <Stepper
-      activeStep={isDesktop ? 1 : wizardStep}
-      alternativeLabel
-      sx={{
-        mb: { xs: 2, md: 1.5 },
-        px: { xs: 0, md: 0.5 },
-        "& .MuiStepLabel-label": {
-          fontSize: { xs: 12, md: 12 },
-          fontWeight: 500,
-          color: "text.secondary",
-          "&.Mui-active": { color: "primary.main", fontWeight: 700 },
-          "&.Mui-completed": { color: "success.main", fontWeight: 600 },
-        },
-      }}
-    >
-      {WIZARD_LABELS.map((label) => (
-        <Step key={label}>
-          <StepLabel>{label}</StepLabel>
-        </Step>
-      ))}
-    </Stepper>
-  );
 
-  /** 桌面：双栏卡片，视口内展示，右侧表单区可滚动 */
+  /** 桌面布局 */
   const desktopLayout = (
     <Box
       sx={{
@@ -778,10 +621,10 @@ export default function Home() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              薯医 NoteRx
+              启医 NoteRx
             </Typography>
             <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", lineHeight: 1.35, opacity: 0.92 }}>
-              核心素材上传 → AI 识别预填 → 一键诊断
+              一次上传素材 → AI 自动识别 → 一键诊断
             </Typography>
           </Box>
         </Box>
@@ -839,10 +682,9 @@ export default function Home() {
               boxShadow: "0 10px 40px rgba(25, 20, 35, 0.07), 0 1px 0 rgba(255,255,255,0.95) inset",
             }}
           >
-            {stepHeader}
             {guideCard}
             <Box sx={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-              <UploadZone files={activeStageFiles} onFilesChange={handleFilesChange} maxFiles={9} compact />
+              <UploadZone files={files} onFilesChange={handleFilesChange} maxFiles={9} compact />
             </Box>
           </Paper>
 
@@ -878,7 +720,16 @@ export default function Home() {
             </Typography>
             <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 0.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
               {aiPanel}
-              {formFields}
+              <Box sx={{ position: "relative" }}>
+                {isFormBlocked && (
+                  <Alert severity="info" sx={{ mb: 1 }}>
+                    AI 正在识别图片内容，识别完成后可编辑“笔记信息”。
+                  </Alert>
+                )}
+                <Box sx={{ opacity: isFormBlocked ? 0.5 : 1, pointerEvents: isFormBlocked ? "none" : "auto", transition: "opacity 0.2s ease" }}>
+                  {formFields}
+                </Box>
+              </Box>
             </Box>
             <Box sx={{ pt: 1.5, flexShrink: 0 }}>{submitBtn}</Box>
           </Paper>
@@ -886,12 +737,11 @@ export default function Home() {
       </Box>
 
       <Typography sx={{ flexShrink: 0, textAlign: "center", pb: 1, fontSize: "0.65rem", color: "text.disabled", letterSpacing: "0.04em" }}>
-        薯医 NoteRx · AI 诊断仅供参考
+        启医 NoteRx · AI 诊断仅供参考
       </Typography>
     </Box>
   );
 
-  /** 移动端：分步 + 自动进入第二步，可返回 */
   const mobileLayout = (
     <Box
       component={motion.div}
@@ -924,36 +774,6 @@ export default function Home() {
           历史记录
         </Button>
       </Box>
-
-      <Box sx={{ textAlign: "center", mb: 2 }}>
-        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-            <defs>
-              <linearGradient id="homeLogoMob" x1="4" y1="4" x2="26" y2="24" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#ff5c6f" />
-                <stop offset="1" stopColor="#e61e3d" />
-              </linearGradient>
-            </defs>
-            <rect width="28" height="28" rx="7" fill="url(#homeLogoMob)" />
-            <text x="14" y="19" textAnchor="middle" fill="#fff" fontSize="13" fontWeight="700" fontFamily="Inter, system-ui, sans-serif">Rx</text>
-          </svg>
-          <Typography
-            sx={{
-              fontSize: "1.35rem",
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
-              background: "linear-gradient(90deg, #1a1a1a, #3d3d3d)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            薯医 NoteRx
-          </Typography>
-        </Box>
-        <Typography sx={{ fontSize: "0.82rem", color: "text.secondary", lineHeight: 1.5 }}>分步完成，上传后会自动进入下一步</Typography>
-      </Box>
-
       <Paper
         elevation={0}
         sx={{
@@ -967,67 +787,25 @@ export default function Home() {
           boxShadow: "0 12px 48px rgba(25, 20, 35, 0.08), 0 1px 0 rgba(255,255,255,0.95) inset",
         }}
       >
-        {stepHeader}
-
-        <AnimatePresence mode="wait">
-          {wizardStep === 0 && (
-            <motion.div
-              key="step0"
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 12 }}
-              transition={{ duration: 0.22 }}
-            >
-              <Stack spacing={2}>
-                {guideCard}
-                <UploadZone files={activeStageFiles} onFilesChange={handleFilesChange} maxFiles={9} />
-                <Typography sx={{ fontSize: 11, color: "#999", textAlign: "center" }}>
-                  {activeStageFiles.length === 0 ? "请上传当前阶段素材" : wizardHold ? "可点下方按钮进入填写信息" : "即将自动进入「确认并完善信息」…"}
-                </Typography>
-                {wizardHold && activeStageFiles.length > 0 && (
-                  <Button variant="outlined" fullWidth onClick={handleWizardContinue} sx={{ borderRadius: "14px", py: 1.1, fontWeight: 600 }}>
-                    前往完善信息
-                  </Button>
-                )}
-              </Stack>
-            </motion.div>
-          )}
-
-          {wizardStep === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
-              transition={{ duration: 0.22 }}
-            >
-              <Stack spacing={2}>
-                <Button
-                  startIcon={<ArrowBackOutlined sx={{ fontSize: 18 }} />}
-                  onClick={handleWizardBack}
-                  sx={{
-                    alignSelf: "flex-start",
-                    color: "text.secondary",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    mb: -0.5,
-                    borderRadius: "10px",
-                    "&:hover": { bgcolor: "rgba(255,36,66,0.06)" },
-                  }}
-                >
-                  返回上传
-                </Button>
-                {aiPanel}
-                {formFields}
-                {submitBtn}
-              </Stack>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Stack spacing={2}>
+          {guideCard}
+          <UploadZone files={files} onFilesChange={handleFilesChange} maxFiles={9} />
+          {aiPanel}
+          <Box sx={{ position: "relative" }}>
+            {isFormBlocked && (
+              <Alert severity="info">
+                AI 正在识别图片内容，识别完成后可编辑“笔记信息”。
+              </Alert>
+            )}
+            <Box sx={{ opacity: isFormBlocked ? 0.5 : 1, pointerEvents: isFormBlocked ? "none" : "auto", transition: "opacity 0.2s ease", mt: isFormBlocked ? 1 : 0 }}>
+              {formFields}
+            </Box>
+          </Box>
+          {submitBtn}
+        </Stack>
       </Paper>
-
       <Typography sx={{ mt: 3, fontSize: "0.72rem", color: "text.disabled", letterSpacing: "0.03em" }}>
-        薯医 NoteRx · AI 诊断仅供参考
+        启医 NoteRx · AI 诊断仅供参考
       </Typography>
     </Box>
   );
