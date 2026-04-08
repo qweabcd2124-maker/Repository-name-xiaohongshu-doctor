@@ -240,30 +240,29 @@ async def quick_recognize(
         logger.info("快识结果: slot_type=%s, title=%s, category=%s, keys=%s",
                      slot_type, str(result.get("title", ""))[:50], result.get("category", ""), list(result.keys()))
 
-        if slot_hint == "content" or slot_type == "content":
-            content_text = str(result.get("content_text", "")).strip()
-            title_text = str(result.get("title", "")).strip()
-            if not content_text or not title_text:
-                try:
-                    from app.analysis.ocr_processor import OCRProcessor
-
-                    ocr = OCRProcessor()
-                    ocr_result = await ocr.extract_text(
-                        image_bytes, client, max_tokens_override=ocr_cap
-                    )
-                    ocr_title = str(ocr_result.get("title", "")).strip()
-                    ocr_content = str(ocr_result.get("content", "")).strip()
-                    ocr_tags = ocr_result.get("tags", [])
-                    if not ocr_content and isinstance(ocr_tags, list):
-                        ocr_content = _normalize_tags(ocr_tags)
-                    if not title_text and ocr_title:
-                        result["title"] = ocr_title
-                    if not content_text and ocr_content:
-                        result["content_text"] = ocr_content
-                    if not str(result.get("summary", "")).strip() and ocr_content:
-                        result["summary"] = ocr_content[:80]
-                except Exception as ocr_error:
-                    logger.warning("quick-recognize OCR fallback failed: %s", ocr_error)
+        # 不管 slot_type，只要 title 或 content_text 为空就尝试 OCR 补充
+        content_text = str(result.get("content_text", "")).strip()
+        title_text = str(result.get("title", "")).strip()
+        if not content_text or not title_text:
+            try:
+                from app.analysis.ocr_processor import OCRProcessor
+                ocr = OCRProcessor()
+                ocr_result = await ocr.extract_text(
+                    image_bytes, client, max_tokens_override=ocr_cap
+                )
+                ocr_title = str(ocr_result.get("title", "")).strip()
+                ocr_content = str(ocr_result.get("content", "")).strip()
+                ocr_tags = ocr_result.get("tags", [])
+                if not ocr_content and isinstance(ocr_tags, list):
+                    ocr_content = _normalize_tags(ocr_tags)
+                if not title_text and ocr_title:
+                    result["title"] = ocr_title
+                if not content_text and ocr_content:
+                    result["content_text"] = ocr_content
+                if not str(result.get("summary", "")).strip() and ocr_content:
+                    result["summary"] = ocr_content[:80]
+            except Exception as ocr_error:
+                logger.warning("quick-recognize OCR fallback failed: %s", ocr_error)
         return {"success": True, **result}
     except Exception as e:
         logger.error("快速识别失败: %s", e)
