@@ -250,7 +250,16 @@ export default function Diagnosing() {
     const tipTimer = setInterval(() => setTipIdx((p) => (p + 1) % tips.length), 4500);
     const clockTimer = setInterval(() => setElapsed((p) => p + 1), 1000);
 
-    return () => { cancelled = true; clearInterval(stepTimer); clearInterval(tipTimer); clearInterval(clockTimer); };
+    // Timeout: 90s fallback
+    const timeoutTimer = setTimeout(() => {
+      if (!apiDone.current && !cancelled) {
+        console.warn("诊断超时，使用 fallback");
+        resultRef.current = { report: FALLBACK_REPORT, isFallback: true };
+        apiDone.current = true;
+      }
+    }, 90000);
+
+    return () => { cancelled = true; clearInterval(stepTimer); clearInterval(tipTimer); clearInterval(clockTimer); clearTimeout(timeoutTimer); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!params) return null;
@@ -288,7 +297,7 @@ export default function Diagnosing() {
                 <Box sx={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <ScoreRing score={preScoreData.total_score} size={76} />
                   <Typography sx={{ fontSize: 11, color: "#10b981", fontWeight: 600, mt: 0.5 }}>
-                    数据预评分
+                    快速评估
                   </Typography>
                 </Box>
 
@@ -296,7 +305,7 @@ export default function Diagnosing() {
                 <Box sx={{ flex: 1, minWidth: 200 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                     <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#262626" }}>
-                      {preScoreData.category_cn}品类 · 即时量化分析
+                      {preScoreData.category_cn}品类 · 基于 874 条数据的快速评估
                     </Typography>
                     <Box sx={{ px: 0.75, py: 0.125, borderRadius: "6px", bgcolor: preScoreData.total_score >= 85 ? "#dcfce7" : preScoreData.total_score >= 70 ? "#fef3c7" : "#fee2e2" }}>
                       <Typography sx={{ fontSize: 11, fontWeight: 700, color: preScoreData.total_score >= 85 ? "#16a34a" : preScoreData.total_score >= 70 ? "#d97706" : "#dc2626" }}>

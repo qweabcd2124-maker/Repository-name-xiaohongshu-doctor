@@ -21,15 +21,17 @@ function fkey(f: File) {
 
 /** 中文垂类 -> 英文 key 映射 */
 const CAT_MAP: Record<string, string> = {
-  "美食": "food",
-  "穿搭": "fashion",
-  "科技": "tech",
-  "数码": "tech",
-  "旅行": "travel",
-  "旅游": "travel",
-  "美妆": "beauty",
-  "健身": "fitness",
-  "运动": "fitness",
+  "美食": "food", "食谱": "food", "做饭": "food", "烘焙": "food",
+  "穿搭": "fashion", "时尚": "fashion", "服装": "fashion", "outfit": "fashion",
+  "科技": "tech", "数码": "tech", "手机": "tech", "电脑": "tech",
+  "旅行": "travel", "旅游": "travel", "景点": "travel",
+  "美妆": "beauty", "护肤": "beauty", "化妆": "beauty",
+  "健身": "fitness", "运动": "fitness", "减肥": "fitness",
+  "生活": "lifestyle", "日常": "lifestyle", "vlog": "lifestyle",
+  "家居": "home", "装修": "home", "家装": "home",
+  // English keys pass through
+  "food": "food", "fashion": "fashion", "tech": "tech", "travel": "travel",
+  "beauty": "beauty", "fitness": "fitness", "lifestyle": "lifestyle", "home": "home",
 };
 
 
