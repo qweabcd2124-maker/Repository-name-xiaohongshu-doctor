@@ -188,6 +188,8 @@ export interface QuickRecognizeResult {
   success: boolean;
   slot_type: string;
   category: string;
+  title?: string;
+  content_text?: string;
   summary: string;
   confidence?: number;
   error?: string;

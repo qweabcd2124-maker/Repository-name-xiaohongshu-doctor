@@ -29,13 +29,15 @@ SLOT_LABELS = {
     "comments": "评论区截图",
 }
 
-_QUICK_PROMPT = """你是一个内容分析助手。请快速分析这张截图，识别出：
+_QUICK_PROMPT = """你是一个小红书笔记内容分析助手。请快速分析这张截图，识别并提取出：
 1. 这是什么类型的截图（封面/正文/主页/评论区/其他）
 2. 内容主题/垂类（如：穿搭、美食、数码、旅行、美妆、健身等）
-3. 从图中提取的关键信息摘要（2-3 句话）
+3. 笔记标题（如果图中可见，请原样提取；如果不可见，设为空字符串）
+4. 笔记正文（如果图中可见，请尽量完整提取；如果不可见，设为空字符串）
+5. 从图中提取的关键信息摘要（2-3 句话）
 
 以JSON格式输出：
-{"slot_type": "cover|content|profile|comments|other", "category": "类别", "summary": "摘要", "confidence": 0.0-1.0}"""
+{"slot_type": "cover|content|profile|comments|other", "category": "类别", "title": "标题或空字符串", "content_text": "正文或空字符串", "summary": "摘要", "confidence": 0.0-1.0}"""
 
 _DEEP_PROMPT_COVER = """分析这张封面截图的视觉吸引力，输出JSON：
 {"visual_score": 0-100, "color_scheme": "配色描述", "composition": "构图评价", "text_overlay": "文字覆盖率评估", "suggestions": ["建议1","建议2"]}"""
