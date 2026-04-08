@@ -19,9 +19,51 @@ from app.agents.visual_agent import VisualAgent
 from app.agents.growth_agent import GrowthAgent
 from app.agents.user_sim_agent import UserSimAgent
 from app.agents.judge_agent import JudgeAgent
+from app.agents.base_agent import _is_mimo_openai_compat
 from app.agents.prompts.debate import DEBATE_PROMPT
 
 logger = logging.getLogger("noterx.orchestrator")
+
+
+def _normalize_issues_items(raw: list | None) -> list[dict]:
+    """
+    将 issues 统一为 list[dict]，满足 DiagnoseResponse；
+    裁判失败时 BaseAgent 可能返回字符串列表。
+    """
+    out: list[dict] = []
+    for it in raw or []:
+        if isinstance(it, dict):
+            desc = it.get("description") or it.get("msg") or ""
+            row = {**it, "description": desc or str(it)}
+            row.setdefault("severity", "high")
+            row.setdefault("from_agent", row.get("from_agent") or "")
+            out.append(row)
+        else:
+            out.append({
+                "severity": "high",
+                "description": str(it),
+                "from_agent": "系统",
+            })
+    return out
+
+
+def _normalize_suggestions_items(raw: list | None) -> list[dict]:
+    """将 suggestions 统一为 list[dict]（priority / description / expected_impact）。"""
+    out: list[dict] = []
+    for it in raw or []:
+        if isinstance(it, dict):
+            out.append({
+                "priority": int(it.get("priority", 1)),
+                "description": str(it.get("description", "")),
+                "expected_impact": str(it.get("expected_impact", "")),
+            })
+        else:
+            out.append({
+                "priority": 1,
+                "description": str(it),
+                "expected_impact": "",
+            })
+    return out
 
 
 class Orchestrator:
@@ -29,9 +71,18 @@ class Orchestrator:
 
     def __init__(self, model: Optional[str] = None):
         """
-        @param model - 覆盖默认模型；未传时使用环境变量 LLM_MODEL，再回退 gpt-4o
+        @param model - 覆盖默认模型；未传时使用 LLM_MODEL；小米 MiMo 可回退 mimo-v2-omni
         """
-        self.model = model or os.getenv("LLM_MODEL", "gpt-4o")
+        if model:
+            self.model = model
+        else:
+            env_model = os.getenv("LLM_MODEL", "").strip()
+            if env_model:
+                self.model = env_model
+            elif _is_mimo_openai_compat():
+                self.model = "mimo-v2-omni"
+            else:
+                self.model = "gpt-4o"
         self.text_analyzer = TextAnalyzer()
         self.image_analyzer = ImageAnalyzer()
         self.baseline_comparator = BaselineComparator()
@@ -252,6 +303,7 @@ class Orchestrator:
     ) -> dict:
         """将裁判报告组装为标准 API 响应格式"""
         radar = final_report.get("radar_data", {})
+        is_llm_error = final_report.get("dimension") == "error"
         if not radar:
             scores = {op.get("dimension", "unknown"): op.get("score", 0) for op in agent_opinions}
             radar = {
@@ -262,8 +314,13 @@ class Orchestrator:
                 "overall": final_report.get("overall_score", 50),
             }
 
-        overall_score = final_report.get("overall_score", 50)
-        grade = final_report.get("grade", self._calc_grade(overall_score))
+        if is_llm_error and final_report.get("overall_score") is None:
+            overall_score = float(final_report.get("score", 0))
+        else:
+            overall_score = float(final_report.get("overall_score", 50))
+        grade = final_report.get("grade") if not is_llm_error else "D"
+        if not grade:
+            grade = self._calc_grade(overall_score)
 
         formatted_opinions = []
         for op in agent_opinions:
@@ -288,15 +345,28 @@ class Orchestrator:
                 })
 
         cover_dir = final_report.get("cover_direction")
+        if cover_dir is not None and not isinstance(cover_dir, dict):
+            cover_dir = None
+
+        issues = _normalize_issues_items(final_report.get("issues", []))
+        suggestions = _normalize_suggestions_items(final_report.get("suggestions", []))
+        if is_llm_error and not suggestions:
+            suggestions = _normalize_suggestions_items([
+                "无法连接大模型服务，请检查网络、代理与 OPENAI_BASE_URL / API Key 配置后重试。",
+            ])
+
+        debate_summary = final_report.get("debate_summary", "")
+        if is_llm_error and not debate_summary:
+            debate_summary = final_report.get("reasoning", "") or "大模型调用失败，未完成 Agent 辩论与综合裁判。"
 
         return {
             "overall_score": overall_score,
             "grade": grade,
             "radar_data": radar,
             "agent_opinions": formatted_opinions,
-            "issues": final_report.get("issues", []),
-            "suggestions": final_report.get("suggestions", []),
-            "debate_summary": final_report.get("debate_summary", ""),
+            "issues": issues,
+            "suggestions": suggestions,
+            "debate_summary": debate_summary,
             "debate_timeline": debate_timeline,
             "simulated_comments": formatted_comments,
             "optimized_title": final_report.get("optimized_title"),
