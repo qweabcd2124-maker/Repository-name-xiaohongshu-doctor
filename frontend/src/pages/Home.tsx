@@ -226,6 +226,26 @@ export default function Home() {
         </Box>
       </Box>
 
+      {/* 截图分析入口 */}
+      <Box
+        onClick={() => navigate("/screenshot")}
+        sx={{
+          width: "100%", maxWidth: 520, mt: 3, p: 2, borderRadius: "12px",
+          bgcolor: "#fff", border: "1px solid #f0f0f0", cursor: "pointer",
+          display: "flex", alignItems: "center", gap: 2,
+          transition: "all 0.15s", "&:hover": { borderColor: "#ff2442", bgcolor: "#fff5f6" },
+        }}
+      >
+        <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: "#fff0f1", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Typography sx={{ fontSize: 20 }}>📸</Typography>
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#262626" }}>截图多维度分析</Typography>
+          <Typography sx={{ fontSize: 12, color: "#999" }}>上传封面/正文/主页/评论区截图，AI 即时识别与深度分析</Typography>
+        </Box>
+        <Typography sx={{ color: "#ccc", fontSize: 18 }}>→</Typography>
+      </Box>
+
       {/* Sample notes */}
       <Box sx={{ width: "100%", maxWidth: 520, mt: 3 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#999", mb: 1 }}>快速体验</Typography>
