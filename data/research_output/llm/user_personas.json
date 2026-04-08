@@ -1,0 +1,272 @@
+{
+  "fashion": {
+    "personas": [
+      {
+        "name": "路人型",
+        "ratio": 0.311,
+        "count": 55,
+        "avg_emotion_level": 2.6,
+        "avg_likes": 0,
+        "typical_comments": [
+          "这就是传说中的贵妇吗？",
+          "都会有的[飞吻R]",
+          "为啥都在电梯里[doge]"
+        ]
+      },
+      {
+        "name": "种草型",
+        "ratio": 0.254,
+        "count": 45,
+        "avg_emotion_level": 3.8,
+        "avg_likes": 0,
+        "typical_comments": [
+          "我也希望我的生活:有一些买漂亮衣服的钱 一些穿漂亮衣服的场合 一些穿漂亮衣服的心情 一个装漂亮衣服的衣帽间 一些需要漂亮",
+          "超爱！全部！想all in！上链接🔗吧！",
+          "太有韵味了"
+        ]
+      },
+      {
+        "name": "调侃型",
+        "ratio": 0.158,
+        "count": 28,
+        "avg_emotion_level": 3.1,
+        "avg_likes": 1,
+        "typical_comments": [
+          "差远了[笑哭R]",
+          "封你为新一代的电梯战神",
+          "林女士，我从中控室的电梯监控里观察你很长时间了，确实漂亮！[doge][doge]"
+        ]
+      },
+      {
+        "name": "经验型",
+        "ratio": 0.153,
+        "count": 27,
+        "avg_emotion_level": 2.7,
+        "avg_likes": 0,
+        "typical_comments": [
+          "这身材样貌，估计穿上没有不好看的",
+          "应该是lowey",
+          "小宝我这里想分享好像一直发不出去会被吞掉 这篇合集里每一套在前面的笔记都可以找到 ～宝可以先翻翻看 找不到的再单独来问我"
+        ]
+      },
+      {
+        "name": "求购型",
+        "ratio": 0.079,
+        "count": 14,
+        "avg_emotion_level": 2.5,
+        "avg_likes": 0,
+        "typical_comments": [
+          "想问p3的绿裙子[飞吻R]",
+          "请问红色连衣裙[害羞R]",
+          "全部链接！！？"
+        ]
+      },
+      {
+        "name": "质疑型",
+        "ratio": 0.045,
+        "count": 8,
+        "avg_emotion_level": 2.5,
+        "avg_likes": 0,
+        "typical_comments": [
+          "没看出来158",
+          "都是夜深人静进电梯拍的吗",
+          "这电梯咋一直没人呢"
+        ]
+      }
+    ],
+    "sentiment_distribution": {
+      "negative": 15,
+      "neutral": 51,
+      "positive": 111
+    },
+    "total_comments": 177,
+    "category_characteristics": "fashion 品类评论生态"
+  },
+  "tech": {
+    "personas": [
+      {
+        "name": "经验型",
+        "ratio": 0.369,
+        "count": 104,
+        "avg_emotion_level": 2.3,
+        "avg_likes": 8,
+        "typical_comments": [
+          "app store模式，掌握分发渠道，你不得不服",
+          "我10岁儿子几乎天天用[笑哭R]",
+          "ESP32的设备蓝牙是可以用来扫描附近设备的蓝牙广播信号。iPhone手机会定期广播来寻找附近的设备，这种广播是不需要连"
+        ]
+      },
+      {
+        "name": "调侃型",
+        "ratio": 0.238,
+        "count": 67,
+        "avg_emotion_level": 3.0,
+        "avg_likes": 8,
+        "typical_comments": [
+          "你可以不进入apple store[doge]",
+          "苹果想空手套白狼啊",
+          "全国就下面俩人"
+        ]
+      },
+      {
+        "name": "质疑型",
+        "ratio": 0.17,
+        "count": 48,
+        "avg_emotion_level": 2.7,
+        "avg_likes": 6,
+        "typical_comments": [
+          "并没有人用Siri吧[doge]",
+          "自己的ai没搞出来，想用这些协议来挽回，丧事喜办",
+          "未必，快手不代表共识"
+        ]
+      },
+      {
+        "name": "路人型",
+        "ratio": 0.163,
+        "count": 46,
+        "avg_emotion_level": 1.6,
+        "avg_likes": 2,
+        "typical_comments": [
+          "你看那些巨头给不给苹果这么搞吧",
+          "有点没懂 老板的手机信号是怎么跟sticks3联系在一起的 求解答",
+          "现在还有几个人用Siri"
+        ]
+      },
+      {
+        "name": "种草型",
+        "ratio": 0.05,
+        "count": 14,
+        "avg_emotion_level": 3.5,
+        "avg_likes": 6,
+        "typical_comments": [
+          "原来需求群体在这啊[笑哭R]",
+          "孩子的世界真是太美好了。与大自然对话如友相待，表明他愿意交流和传达出善意。你这娃以后不可限量啊",
+          "[呃R][呃R] 你为啥这么有创意，被你上个视频种草，今天 stick s3 刚送到，还不知道怎么开发"
+        ]
+      },
+      {
+        "name": "求购型",
+        "ratio": 0.007,
+        "count": 2,
+        "avg_emotion_level": 4.0,
+        "avg_likes": 1,
+        "typical_comments": [
+          "优秀！！急需上传固件至m5burner[doge][doge]",
+          "要有自己的硬件啊，必须华为"
+        ]
+      },
+      {
+        "name": "吐槽型",
+        "ratio": 0.004,
+        "count": 1,
+        "avg_emotion_level": 4.0,
+        "avg_likes": 0,
+        "typical_comments": [
+          "不用Siri还是因为现在Siri太拉了，什么都问不出来[失望R]"
+        ]
+      }
+    ],
+    "sentiment_distribution": {
+      "negative": 77,
+      "neutral": 137,
+      "positive": 69
+    },
+    "total_comments": 282,
+    "category_characteristics": "tech 品类评论生态"
+  },
+  "lifestyle": {
+    "personas": [
+      {
+        "name": "调侃型",
+        "ratio": 0.303,
+        "count": 528,
+        "avg_emotion_level": 3.1,
+        "avg_likes": 122,
+        "typical_comments": [
+          "白磷型人格，有一种恍然小悟的感觉，挺好的[笑哭R]",
+          "你说得比较可爱，其他评论mean一点哈哈哈哈[捂脸R]",
+          "[暗中观察R]过去问一下，你是不是那个暴风影音？"
+        ]
+      },
+      {
+        "name": "路人型",
+        "ratio": 0.298,
+        "count": 520,
+        "avg_emotion_level": 1.9,
+        "avg_likes": 26,
+        "typical_comments": [
+          "我今天八点就觉醒了",
+          "在无力的年纪遇到了最想去的岗位[哭惹R]",
+          "我天 15-20k都不行了吗[捂脸R]我还想说终于有个把会计当人看的公司"
+        ]
+      },
+      {
+        "name": "经验型",
+        "ratio": 0.229,
+        "count": 400,
+        "avg_emotion_level": 2.5,
+        "avg_likes": 163,
+        "typical_comments": [
+          "我似乎能get到一点博主的意思，因为我也在很长的时间里面都感觉人生是一个轨道，每天按照学校吩咐的各种任务去应付，对于学校",
+          "哇塞，你的表达能力太好了！我觉得跟你聊天会很幸福。是的，就是这个意思，我还提到人生这样的觉醒有很多，比如在上班，突然就辞",
+          "你知道吗，去年你们官网上写了招三维动画师实习，但只招26届，于是我学了一年blender，今年想投递时，发现你们官网在s"
+        ]
+      },
+      {
+        "name": "质疑型",
+        "ratio": 0.107,
+        "count": 187,
+        "avg_emotion_level": 2.8,
+        "avg_likes": 71,
+        "typical_comments": [
+          "你这叫顿悟",
+          "词义是有边界的不能随便扩大缩小，不然你拉个屎都叫解放，洗个澡都叫净化，走个路都叫踽踽独行，吃个饭都叫摄取万物精华",
+          "为什么那个老师自己考不到12名，帮她就能"
+        ]
+      },
+      {
+        "name": "种草型",
+        "ratio": 0.042,
+        "count": 73,
+        "avg_emotion_level": 3.7,
+        "avg_likes": 5,
+        "typical_comments": [
+          "我一路up到韩国 给我up起来！！",
+          "柳智敏nb666",
+          "Spice it up⬆️up⬆️up⬆️hold up🤚🏻Burn it up,🔥see me down👀contro"
+        ]
+      },
+      {
+        "name": "求购型",
+        "ratio": 0.017,
+        "count": 30,
+        "avg_emotion_level": 2.7,
+        "avg_likes": 71,
+        "typical_comments": [
+          "能不能招点和临床医学相关的岗位啊",
+          "有校招岗嘛[皱眉R]",
+          "我求求HR了，我去投正职，给我一个实习的机会，好嘛[哭惹R]"
+        ]
+      },
+      {
+        "name": "吐槽型",
+        "ratio": 0.003,
+        "count": 6,
+        "avg_emotion_level": 3.7,
+        "avg_likes": 1,
+        "typical_comments": [
+          "烦死了这个，没带手机想报取件码取都不行，非得你扫码[生气R]",
+          "现在用多多扫码取件，我淘宝还有抖音上的件大部分都需要自己手动输入，超级麻烦，以前直接找取件码方便多了，超级烦多多取件的亮",
+          "嗯嗯 ，我真的 我服了 这种事出来结果不仅不了了之"
+        ]
+      }
+    ],
+    "sentiment_distribution": {
+      "negative": 388,
+      "neutral": 817,
+      "positive": 539
+    },
+    "total_comments": 1744,
+    "category_characteristics": "lifestyle 品类评论生态"
+  }
+}

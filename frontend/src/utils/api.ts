@@ -96,6 +96,81 @@ export async function diagnoseNote(
 }
 
 /**
+ * Model A 即时预评分（<50ms，无 LLM 调用）
+ */
+export interface PreScoreResult {
+  total_score: number;
+  dimensions: Record<string, number>;
+  weights: Record<string, number>;
+  level: string;
+  baseline: { avg_engagement: number; median: number; viral_threshold: number; sample_size: number };
+  category: string;
+  category_cn: string;
+}
+
+export async function preScore(params: {
+  title: string; content: string; category: string; tags: string; image_count: number;
+}): Promise<PreScoreResult> {
+  const fd = new FormData();
+  fd.append("title", params.title);
+  fd.append("content", params.content);
+  fd.append("category", params.category);
+  fd.append("tags", params.tags);
+  fd.append("image_count", String(params.image_count));
+  const { data } = await api.post<PreScoreResult>("/pre-score", fd);
+  return data;
+}
+
+/**
+ * SSE 流式诊断
+ */
+export type StreamEvent =
+  | { type: "pre_score"; data: PreScoreResult & { title: string } }
+  | { type: "progress"; data: { step: string; message: string } }
+  | { type: "result"; data: DiagnoseResult }
+  | { type: "error"; data: { message: string } };
+
+export async function diagnoseStream(
+  params: DiagnoseParams,
+  onEvent: (event: StreamEvent) => void,
+): Promise<void> {
+  const fd = new FormData();
+  fd.append("title", params.title);
+  fd.append("content", params.content);
+  fd.append("category", params.category);
+  fd.append("tags", params.tags);
+  if (params.coverImage) fd.append("cover_image", params.coverImage);
+  if (params.coverImages) params.coverImages.forEach((f) => fd.append("cover_images", f));
+  if (params.videoFile) fd.append("video_file", params.videoFile);
+
+  const response = await fetch("/api/diagnose-stream", { method: "POST", body: fd });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    let eventType = "";
+    for (const line of lines) {
+      if (line.startsWith("event: ")) {
+        eventType = line.slice(7).trim();
+      } else if (line.startsWith("data: ") && eventType) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          onEvent({ type: eventType, data } as StreamEvent);
+        } catch { /* ignore parse errors */ }
+        eventType = "";
+      }
+    }
+  }
+}
+
+/**
  * 获取垂类 baseline 概览
  */
 export async function getBaseline(category: string) {

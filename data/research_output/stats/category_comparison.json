@@ -1,26 +1,26 @@
 {
   "title_length": {
-    "H_statistic": 1.2955,
-    "p_value": 0.862145,
+    "H_statistic": 1.8925,
+    "p_value": 0.755531,
     "significant": false
   },
   "tag_count": {
-    "H_statistic": 21.5643,
-    "p_value": 0.000245,
+    "H_statistic": 24.4401,
+    "p_value": 6.5e-05,
     "significant": true
   },
   "content_length": {
-    "H_statistic": 37.6177,
+    "H_statistic": 64.6852,
     "p_value": 0.0,
     "significant": true
   },
   "image_count": {
-    "H_statistic": 61.0426,
+    "H_statistic": 140.9785,
     "p_value": 0.0,
     "significant": true
   },
   "engagement": {
-    "H_statistic": 201.8931,
+    "H_statistic": 215.2956,
     "p_value": 0.0,
     "significant": true
   }

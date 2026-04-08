@@ -8,6 +8,7 @@ import json
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts.user_sim_agent import SYSTEM_PROMPT
+from app.agents.research_data import build_data_prompt_for_agent
 
 
 class UserSimAgent(BaseAgent):
@@ -36,6 +37,7 @@ class UserSimAgent(BaseAgent):
 
 请模拟不同类型的小红书用户看到这篇{cat_cn}笔记后的反应，
 并生成模拟评论区。"""
+        msg += build_data_prompt_for_agent("user_sim", category)
         return msg
 
     async def diagnose(self, **kwargs) -> dict:

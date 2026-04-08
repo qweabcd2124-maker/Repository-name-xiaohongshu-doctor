@@ -6,6 +6,7 @@ import json
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts.content_agent import SYSTEM_PROMPT
+from app.agents.research_data import build_data_prompt_for_agent
 
 
 class ContentAgent(BaseAgent):
@@ -50,6 +51,7 @@ class ContentAgent(BaseAgent):
 - 标题字数判定: {comparisons.get('title_length', {}).get('verdict', 'N/A')}
 
 请基于以上数据给出你的专业诊断。"""
+        msg += build_data_prompt_for_agent("content", category)
         return msg
 
     async def diagnose(self, **kwargs) -> dict:

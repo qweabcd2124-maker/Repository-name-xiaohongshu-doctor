@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # 路径
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
-RAW_DATA_DIR = DATA_DIR / "帖子数据_待处理"
+RAW_DATA_DIR = DATA_DIR / "原始数据"
 COVERS_DIR = DATA_DIR / "covers"
 OUTPUT_DIR = DATA_DIR / "research_output"
 CHARTS_DIR = OUTPUT_DIR / "charts"
@@ -28,16 +28,21 @@ MODEL_FAST = os.getenv("LLM_MODEL_FAST", "mimo-v2-flash")
 MODEL_PRO = os.getenv("LLM_MODEL_PRO", "mimo-v2-pro")
 MODEL_OMNI = os.getenv("LLM_MODEL_OMNI", "mimo-v2-omni")
 
-# 品类映射（原始文件名 → 内部品类 key）
+# 品类映射（原始文件名关键词 → 内部品类 key）
 FILE_CATEGORY_MAP = {
     "美食帖": "food",
     "穿搭帖": "fashion",
-    "时尚帖": "fashion",   # 时尚和穿搭合并为 fashion
+    "时尚帖": "fashion",
+    "穿搭博主": "fashion",
     "科技帖": "tech",
+    "博主A": "tech",        # 博主A 内容为科技类
+    "3_博主信息": "tech",   # 推荐系统帖，归入 tech
     "旅游帖": "travel",
     "美妆帖": "beauty",
     "健身帖": "fitness",
     "生活帖": "lifestyle",
+    "女性觉醒博主": "lifestyle",
+    "追星博主": "lifestyle",
     "家居帖": "home",
 }
 

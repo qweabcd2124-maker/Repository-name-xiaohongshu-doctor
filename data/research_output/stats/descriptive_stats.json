@@ -1,122 +1,362 @@
 {
-  "other": {
-    "total": 12,
-    "viral_count": 2,
+  "lifestyle": {
+    "total": 48,
+    "viral_count": 5,
     "likes": {
-      "mean": 11333.83,
-      "median": 1790.5,
-      "std": 19621.88,
-      "p25": 750.0,
-      "p75": 11449.5,
-      "p90": 26400.0
+      "mean": 6190.98,
+      "median": 568.5,
+      "std": 15249.49,
+      "p25": 61.5,
+      "p75": 4237.0,
+      "p90": 11963.0
     },
     "collects": {
-      "mean": 1923.67,
-      "median": 612.5,
-      "std": 2998.76,
-      "p25": 72.75,
-      "p75": 1906.25,
-      "p90": 5630.3
+      "mean": 887.83,
+      "median": 90.0,
+      "std": 2198.72,
+      "p25": 6.0,
+      "p75": 376.5,
+      "p90": 2139.7
     },
     "comments_count": {
-      "mean": 925.0,
-      "median": 431.5,
-      "std": 1578.74,
-      "p25": 141.75,
-      "p75": 714.25,
-      "p90": 1773.1
+      "mean": 263.83,
+      "median": 11.0,
+      "std": 861.82,
+      "p25": 0.75,
+      "p75": 106.0,
+      "p90": 622.9
     },
     "shares": {
-      "mean": 2574.75,
-      "median": 603.0,
-      "std": 6197.99,
-      "p25": 130.0,
-      "p75": 1354.25,
-      "p90": 3327.5
+      "mean": 695.42,
+      "median": 29.5,
+      "std": 3210.07,
+      "p25": 0.0,
+      "p75": 104.75,
+      "p90": 739.9
     },
     "engagement": {
-      "mean": 16757.25,
-      "median": 4963.5,
-      "std": 26605.18,
-      "p25": 983.0,
-      "p75": 15846.25,
-      "p90": 48876.4
+      "mean": 8038.06,
+      "median": 772.5,
+      "std": 19415.29,
+      "p25": 66.5,
+      "p75": 4819.5,
+      "p90": 17097.3
     },
     "title_length": {
-      "mean": 15.83,
-      "median": 15.0,
-      "std": 4.13,
-      "p25": 12.75,
-      "p75": 17.75,
-      "p90": 21.8
+      "mean": 14.81,
+      "median": 15.5,
+      "std": 5.55,
+      "p25": 10.0,
+      "p75": 20.0,
+      "p90": 21.0
     },
     "content_length": {
-      "mean": 274.42,
-      "median": 133.5,
-      "std": 314.68,
-      "p25": 56.25,
-      "p75": 430.25,
-      "p90": 651.2
+      "mean": 112.83,
+      "median": 96.0,
+      "std": 123.88,
+      "p25": 23.5,
+      "p75": 147.5,
+      "p90": 218.8
     },
     "tag_count": {
-      "mean": 3.42,
-      "median": 3.5,
-      "std": 3.29,
-      "p25": 0.0,
-      "p75": 5.0,
-      "p90": 7.7
+      "mean": 4.81,
+      "median": 3.0,
+      "std": 4.1,
+      "p25": 1.0,
+      "p75": 10.0,
+      "p90": 10.0
     },
     "image_count": {
-      "mean": 5.08,
-      "median": 1.5,
-      "std": 6.13,
-      "p25": 1.0,
-      "p75": 8.0,
-      "p90": 13.7
+      "mean": 1.12,
+      "median": 0.0,
+      "std": 3.36,
+      "p25": 0.0,
+      "p75": 0.0,
+      "p90": 2.0
     },
     "viral_vs_normal": {
       "likes": {
-        "viral_mean": 44000.0,
-        "normal_mean": 4800.6
+        "viral_mean": 45800.0,
+        "normal_mean": 1585.28
       },
       "collects": {
-        "viral_mean": 7886.0,
-        "normal_mean": 731.2
+        "viral_mean": 6519.0,
+        "normal_mean": 233.05
       },
       "comments_count": {
-        "viral_mean": 3780.0,
-        "normal_mean": 354.0
+        "viral_mean": 1854.6,
+        "normal_mean": 78.86
       },
       "shares": {
-        "viral_mean": 12753.0,
-        "normal_mean": 539.1
+        "viral_mean": 6182.0,
+        "normal_mean": 57.44
       },
       "engagement": {
-        "viral_mean": 68419.0,
-        "normal_mean": 6424.9
+        "viral_mean": 60355.6,
+        "normal_mean": 1954.63
       },
       "title_length": {
-        "viral_mean": 16.5,
-        "normal_mean": 15.7
+        "viral_mean": 19.4,
+        "normal_mean": 14.28
       },
       "content_length": {
-        "viral_mean": 247.5,
-        "normal_mean": 279.8
+        "viral_mean": 143.4,
+        "normal_mean": 109.28
       },
       "tag_count": {
-        "viral_mean": 4.0,
-        "normal_mean": 3.3
+        "viral_mean": 5.0,
+        "normal_mean": 4.79
       },
       "image_count": {
-        "viral_mean": 3.0,
-        "normal_mean": 5.5
+        "viral_mean": 1.2,
+        "normal_mean": 1.12
       }
     },
     "image_vs_video": {
-      "image_count": 10,
-      "video_count": 2,
-      "image_avg_engagement": 16937.2,
-      "video_avg_engagement": 15857.5
+      "image_count": 11,
+      "video_count": 37,
+      "image_avg_engagement": 13507.55,
+      "video_avg_engagement": 6412.0
+    }
+  },
+  "fashion": {
+    "total": 278,
+    "viral_count": 28,
+    "likes": {
+      "mean": 5554.17,
+      "median": 1523.5,
+      "std": 12669.39,
+      "p25": 361.0,
+      "p75": 5595.0,
+      "p90": 14000.0
+    },
+    "collects": {
+      "mean": 1169.47,
+      "median": 306.0,
+      "std": 2194.55,
+      "p25": 67.5,
+      "p75": 1090.75,
+      "p90": 3430.9
+    },
+    "comments_count": {
+      "mean": 289.86,
+      "median": 57.0,
+      "std": 866.82,
+      "p25": 13.0,
+      "p75": 180.75,
+      "p90": 678.4
+    },
+    "shares": {
+      "mean": 493.72,
+      "median": 110.5,
+      "std": 1544.64,
+      "p25": 31.25,
+      "p75": 370.0,
+      "p90": 893.6
+    },
+    "engagement": {
+      "mean": 7507.22,
+      "median": 2069.0,
+      "std": 16447.04,
+      "p25": 563.75,
+      "p75": 7652.25,
+      "p90": 18037.4
+    },
+    "title_length": {
+      "mean": 15.5,
+      "median": 16.0,
+      "std": 6.53,
+      "p25": 11.0,
+      "p75": 20.0,
+      "p90": 23.0
+    },
+    "content_length": {
+      "mean": 202.3,
+      "median": 140.5,
+      "std": 211.99,
+      "p25": 91.5,
+      "p75": 223.75,
+      "p90": 410.5
+    },
+    "tag_count": {
+      "mean": 7.15,
+      "median": 7.0,
+      "std": 4.04,
+      "p25": 4.0,
+      "p75": 10.0,
+      "p90": 10.0
+    },
+    "image_count": {
+      "mean": 7.23,
+      "median": 6.0,
+      "std": 5.85,
+      "p25": 2.0,
+      "p75": 10.0,
+      "p90": 18.0
+    },
+    "viral_vs_normal": {
+      "likes": {
+        "viral_mean": 33464.29,
+        "normal_mean": 2428.24
+      },
+      "collects": {
+        "viral_mean": 5849.71,
+        "normal_mean": 645.28
+      },
+      "comments_count": {
+        "viral_mean": 1377.71,
+        "normal_mean": 168.02
+      },
+      "shares": {
+        "viral_mean": 2615.68,
+        "normal_mean": 256.06
+      },
+      "engagement": {
+        "viral_mean": 43307.39,
+        "normal_mean": 3497.6
+      },
+      "title_length": {
+        "viral_mean": 14.0,
+        "normal_mean": 15.66
+      },
+      "content_length": {
+        "viral_mean": 121.25,
+        "normal_mean": 211.38
+      },
+      "tag_count": {
+        "viral_mean": 6.36,
+        "normal_mean": 7.24
+      },
+      "image_count": {
+        "viral_mean": 6.25,
+        "normal_mean": 7.34
+      }
+    },
+    "image_vs_video": {
+      "image_count": 251,
+      "video_count": 27,
+      "image_avg_engagement": 6212.45,
+      "video_avg_engagement": 19543.78
+    }
+  },
+  "tech": {
+    "total": 235,
+    "viral_count": 24,
+    "likes": {
+      "mean": 622.26,
+      "median": 86.0,
+      "std": 1770.03,
+      "p25": 9.5,
+      "p75": 453.5,
+      "p90": 1646.2
+    },
+    "collects": {
+      "mean": 349.63,
+      "median": 31.0,
+      "std": 982.02,
+      "p25": 2.0,
+      "p75": 220.0,
+      "p90": 927.8
+    },
+    "comments_count": {
+      "mean": 153.51,
+      "median": 12.0,
+      "std": 772.8,
+      "p25": 2.0,
+      "p75": 81.5,
+      "p90": 269.0
+    },
+    "shares": {
+      "mean": 149.18,
+      "median": 9.0,
+      "std": 490.86,
+      "p25": 1.0,
+      "p75": 77.0,
+      "p90": 234.2
+    },
+    "engagement": {
+      "mean": 1274.57,
+      "median": 175.0,
+      "std": 3351.99,
+      "p25": 22.5,
+      "p75": 953.5,
+      "p90": 3325.2
+    },
+    "title_length": {
+      "mean": 14.82,
+      "median": 16.0,
+      "std": 7.25,
+      "p25": 12.0,
+      "p75": 20.0,
+      "p90": 22.6
+    },
+    "content_length": {
+      "mean": 333.82,
+      "median": 190.0,
+      "std": 318.19,
+      "p25": 86.5,
+      "p75": 516.5,
+      "p90": 937.0
+    },
+    "tag_count": {
+      "mean": 6.06,
+      "median": 6.0,
+      "std": 3.45,
+      "p25": 4.0,
+      "p75": 9.0,
+      "p90": 10.0
+    },
+    "image_count": {
+      "mean": 4.02,
+      "median": 2.0,
+      "std": 4.23,
+      "p25": 1.0,
+      "p75": 6.0,
+      "p90": 10.0
+    },
+    "viral_vs_normal": {
+      "likes": {
+        "viral_mean": 3941.42,
+        "normal_mean": 244.72
+      },
+      "collects": {
+        "viral_mean": 2362.08,
+        "normal_mean": 120.72
+      },
+      "comments_count": {
+        "viral_mean": 981.58,
+        "normal_mean": 59.32
+      },
+      "shares": {
+        "viral_mean": 1096.83,
+        "normal_mean": 41.39
+      },
+      "engagement": {
+        "viral_mean": 8381.92,
+        "normal_mean": 466.16
+      },
+      "title_length": {
+        "viral_mean": 17.46,
+        "normal_mean": 14.52
+      },
+      "content_length": {
+        "viral_mean": 451.71,
+        "normal_mean": 320.41
+      },
+      "tag_count": {
+        "viral_mean": 6.17,
+        "normal_mean": 6.05
+      },
+      "image_count": {
+        "viral_mean": 6.33,
+        "normal_mean": 3.75
+      }
+    },
+    "image_vs_video": {
+      "image_count": 198,
+      "video_count": 37,
+      "image_avg_engagement": 1208.59,
+      "video_avg_engagement": 1627.7
     }
   },
   "travel": {
@@ -237,246 +477,6 @@
       "video_count": 11,
       "image_avg_engagement": 12832.43,
       "video_avg_engagement": 56915.27
-    }
-  },
-  "fashion": {
-    "total": 259,
-    "viral_count": 26,
-    "likes": {
-      "mean": 5917.03,
-      "median": 1623.0,
-      "std": 13044.49,
-      "p25": 459.0,
-      "p75": 5799.5,
-      "p90": 15000.0
-    },
-    "collects": {
-      "mean": 1244.31,
-      "median": 376.0,
-      "std": 2253.76,
-      "p25": 72.0,
-      "p75": 1207.5,
-      "p90": 3697.4
-    },
-    "comments_count": {
-      "mean": 309.42,
-      "median": 65.0,
-      "std": 894.87,
-      "p25": 16.0,
-      "p75": 216.5,
-      "p90": 710.4
-    },
-    "shares": {
-      "mean": 520.95,
-      "median": 117.0,
-      "std": 1596.27,
-      "p25": 34.0,
-      "p75": 393.0,
-      "p90": 942.8
-    },
-    "engagement": {
-      "mean": 7991.72,
-      "median": 2400.0,
-      "std": 16928.16,
-      "p25": 693.5,
-      "p75": 8357.0,
-      "p90": 20065.6
-    },
-    "title_length": {
-      "mean": 15.31,
-      "median": 16.0,
-      "std": 6.68,
-      "p25": 11.0,
-      "p75": 20.0,
-      "p90": 24.0
-    },
-    "content_length": {
-      "mean": 209.06,
-      "median": 146.0,
-      "std": 217.16,
-      "p25": 94.0,
-      "p75": 228.0,
-      "p90": 415.2
-    },
-    "tag_count": {
-      "mean": 7.11,
-      "median": 7.0,
-      "std": 4.18,
-      "p25": 4.0,
-      "p75": 10.0,
-      "p90": 10.0
-    },
-    "image_count": {
-      "mean": 6.47,
-      "median": 6.0,
-      "std": 5.3,
-      "p25": 1.0,
-      "p75": 9.0,
-      "p90": 15.0
-    },
-    "viral_vs_normal": {
-      "likes": {
-        "viral_mean": 34923.08,
-        "normal_mean": 2680.3
-      },
-      "collects": {
-        "viral_mean": 6038.73,
-        "normal_mean": 709.31
-      },
-      "comments_count": {
-        "viral_mean": 1471.35,
-        "normal_mean": 179.77
-      },
-      "shares": {
-        "viral_mean": 2728.73,
-        "normal_mean": 274.59
-      },
-      "engagement": {
-        "viral_mean": 45161.88,
-        "normal_mean": 3843.97
-      },
-      "title_length": {
-        "viral_mean": 14.5,
-        "normal_mean": 15.4
-      },
-      "content_length": {
-        "viral_mean": 124.42,
-        "normal_mean": 218.5
-      },
-      "tag_count": {
-        "viral_mean": 6.35,
-        "normal_mean": 7.19
-      },
-      "image_count": {
-        "viral_mean": 5.92,
-        "normal_mean": 6.53
-      }
-    },
-    "image_vs_video": {
-      "image_count": 232,
-      "video_count": 27,
-      "image_avg_engagement": 6647.3,
-      "video_avg_engagement": 19543.78
-    }
-  },
-  "tech": {
-    "total": 213,
-    "viral_count": 22,
-    "likes": {
-      "mean": 647.64,
-      "median": 88.0,
-      "std": 1847.44,
-      "p25": 8.0,
-      "p75": 456.0,
-      "p90": 1657.6
-    },
-    "collects": {
-      "mean": 358.11,
-      "median": 36.0,
-      "std": 1017.38,
-      "p25": 2.0,
-      "p75": 217.0,
-      "p90": 947.0
-    },
-    "comments_count": {
-      "mean": 164.75,
-      "median": 14.0,
-      "std": 809.59,
-      "p25": 2.0,
-      "p75": 85.0,
-      "p90": 299.0
-    },
-    "shares": {
-      "mean": 150.88,
-      "median": 9.0,
-      "std": 501.23,
-      "p25": 1.0,
-      "p75": 77.0,
-      "p90": 231.8
-    },
-    "engagement": {
-      "mean": 1321.38,
-      "median": 186.0,
-      "std": 3485.95,
-      "p25": 25.0,
-      "p75": 924.0,
-      "p90": 3341.6
-    },
-    "title_length": {
-      "mean": 14.73,
-      "median": 16.0,
-      "std": 7.48,
-      "p25": 12.0,
-      "p75": 20.0,
-      "p90": 22.0
-    },
-    "content_length": {
-      "mean": 352.21,
-      "median": 220.0,
-      "std": 320.51,
-      "p25": 106.0,
-      "p75": 576.0,
-      "p90": 951.8
-    },
-    "tag_count": {
-      "mean": 6.12,
-      "median": 6.0,
-      "std": 3.53,
-      "p25": 4.0,
-      "p75": 9.0,
-      "p90": 10.0
-    },
-    "image_count": {
-      "mean": 4.27,
-      "median": 3.0,
-      "std": 4.23,
-      "p25": 1.0,
-      "p75": 6.0,
-      "p90": 10.0
-    },
-    "viral_vs_normal": {
-      "likes": {
-        "viral_mean": 4136.95,
-        "normal_mean": 245.73
-      },
-      "collects": {
-        "viral_mean": 2433.5,
-        "normal_mean": 119.06
-      },
-      "comments_count": {
-        "viral_mean": 1034.68,
-        "normal_mean": 64.54
-      },
-      "shares": {
-        "viral_mean": 1087.55,
-        "normal_mean": 42.99
-      },
-      "engagement": {
-        "viral_mean": 8692.68,
-        "normal_mean": 472.33
-      },
-      "title_length": {
-        "viral_mean": 17.64,
-        "normal_mean": 14.4
-      },
-      "content_length": {
-        "viral_mean": 415.82,
-        "normal_mean": 344.88
-      },
-      "tag_count": {
-        "viral_mean": 6.5,
-        "normal_mean": 6.07
-      },
-      "image_count": {
-        "viral_mean": 5.95,
-        "normal_mean": 4.08
-      }
-    },
-    "image_vs_video": {
-      "image_count": 193,
-      "video_count": 20,
-      "image_avg_engagement": 1188.29,
-      "video_avg_engagement": 2605.7
     }
   },
   "food": {

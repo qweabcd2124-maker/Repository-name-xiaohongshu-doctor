@@ -1,56 +1,70 @@
 {
-  "travel": {
-    "r_squared": 0.1386,
+  "lifestyle": {
+    "r_squared": 0.3961,
     "coefficients": {
-      "title_length": 0.0694,
-      "tag_count": 0.5316,
-      "has_numbers": -0.0385,
-      "image_count": 0.1464,
-      "content_length": -0.065,
-      "has_emoji": -0.1337,
-      "title_hook_count": -0.4969
+      "title_length": 0.9993,
+      "tag_count": 0.7762,
+      "has_numbers": 0.1059,
+      "image_count": -0.1713,
+      "content_length": -0.233,
+      "has_emoji": 0.2822,
+      "title_hook_count": -0.0338
+    },
+    "intercept": 6.5051,
+    "sample_size": 48
+  },
+  "fashion": {
+    "r_squared": 0.0169,
+    "coefficients": {
+      "title_length": -0.1965,
+      "tag_count": 0.0463,
+      "has_numbers": -0.0057,
+      "image_count": -0.1175,
+      "content_length": -0.1005,
+      "has_emoji": 0.0203,
+      "title_hook_count": 0.1148
+    },
+    "intercept": 7.5219,
+    "sample_size": 278
+  },
+  "tech": {
+    "r_squared": 0.1773,
+    "coefficients": {
+      "title_length": 0.6302,
+      "tag_count": 0.1847,
+      "has_numbers": 0.1628,
+      "image_count": 0.408,
+      "content_length": 0.2441,
+      "has_emoji": -0.112,
+      "title_hook_count": -0.009
+    },
+    "intercept": 4.9044,
+    "sample_size": 235
+  },
+  "travel": {
+    "r_squared": 0.1375,
+    "coefficients": {
+      "title_length": 0.0755,
+      "tag_count": 0.5213,
+      "has_numbers": -0.0386,
+      "image_count": 0.1378,
+      "content_length": -0.0829,
+      "has_emoji": -0.0998,
+      "title_hook_count": -0.5138
     },
     "intercept": 8.2864,
     "sample_size": 130
   },
-  "fashion": {
-    "r_squared": 0.0308,
-    "coefficients": {
-      "title_length": -0.1304,
-      "tag_count": 0.0176,
-      "has_numbers": -0.1349,
-      "image_count": 0.2104,
-      "content_length": -0.2294,
-      "has_emoji": 0.0714,
-      "title_hook_count": 0.1056
-    },
-    "intercept": 7.6568,
-    "sample_size": 259
-  },
-  "tech": {
-    "r_squared": 0.1928,
-    "coefficients": {
-      "title_length": 0.6832,
-      "tag_count": 0.2031,
-      "has_numbers": 0.2585,
-      "image_count": 0.3719,
-      "content_length": 0.1441,
-      "has_emoji": -0.0915,
-      "title_hook_count": -0.0073
-    },
-    "intercept": 4.9143,
-    "sample_size": 213
-  },
   "food": {
-    "r_squared": 0.1049,
+    "r_squared": 0.1064,
     "coefficients": {
-      "title_length": 0.7415,
-      "tag_count": 0.2345,
-      "has_numbers": -0.3503,
-      "image_count": 0.1089,
-      "content_length": -0.2745,
-      "has_emoji": 0.0558,
-      "title_hook_count": 0.3065
+      "title_length": 0.7128,
+      "tag_count": 0.2252,
+      "has_numbers": -0.3312,
+      "image_count": 0.1067,
+      "content_length": -0.305,
+      "has_emoji": 0.1511,
+      "title_hook_count": 0.2821
     },
     "intercept": 8.2729,
     "sample_size": 183

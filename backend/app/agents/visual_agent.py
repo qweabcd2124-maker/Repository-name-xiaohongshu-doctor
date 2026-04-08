@@ -8,6 +8,7 @@ import json
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts.visual_agent import SYSTEM_PROMPT
+from app.agents.research_data import build_data_prompt_for_agent
 
 
 class VisualAgent(BaseAgent):
@@ -71,6 +72,7 @@ class VisualAgent(BaseAgent):
 {cover_comp if cover_comp else '暂无对比数据'}
 
 请基于以上数据给出你的视觉诊断。"""
+        msg += build_data_prompt_for_agent("visual", category)
         return msg
 
     async def diagnose(self, **kwargs) -> dict:

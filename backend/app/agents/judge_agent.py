@@ -8,6 +8,7 @@ import json
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts.judge_agent import SYSTEM_PROMPT
+from app.agents.research_data import build_data_prompt_for_agent
 
 
 class JudgeAgent(BaseAgent):
@@ -55,6 +56,7 @@ class JudgeAgent(BaseAgent):
 {debate_text}
 
 请综合以上所有Agent的意见和辩论记录，给出最终的诊断报告。"""
+        msg += build_data_prompt_for_agent("judge", category)
         return msg
 
     async def diagnose(self, **kwargs) -> dict:

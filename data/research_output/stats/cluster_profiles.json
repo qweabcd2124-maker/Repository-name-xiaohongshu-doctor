@@ -1,67 +1,67 @@
 {
   "0": {
-    "count": 172,
-    "avg_engagement": 16463.5,
-    "viral_rate": 11.6,
+    "count": 113,
+    "avg_engagement": 7046.7,
+    "viral_rate": 9.7,
     "features": {
-      "title_length": 15.71,
-      "tag_count": 3.8,
-      "image_count": 3.31,
-      "content_length": 133.76,
-      "has_numbers": 0.02,
-      "title_hook_count": 0.49
+      "title_length": 17.16,
+      "tag_count": 7.86,
+      "image_count": 8.42,
+      "content_length": 871.94,
+      "has_numbers": 0.17,
+      "title_hook_count": 0.68
     }
   },
   "1": {
-    "count": 204,
-    "avg_engagement": 20421.0,
-    "viral_rate": 11.8,
+    "count": 152,
+    "avg_engagement": 11568.8,
+    "viral_rate": 9.2,
     "features": {
-      "title_length": 16.4,
-      "tag_count": 9.82,
-      "image_count": 8.37,
-      "content_length": 243.68,
+      "title_length": 15.37,
+      "tag_count": 8.86,
+      "image_count": 12.14,
+      "content_length": 216.79,
       "has_numbers": 0.0,
-      "title_hook_count": 0.6
+      "title_hook_count": 0.41
     }
   },
   "2": {
-    "count": 105,
-    "avg_engagement": 7451.2,
-    "viral_rate": 8.6,
+    "count": 212,
+    "avg_engagement": 8883.2,
+    "viral_rate": 6.1,
     "features": {
-      "title_length": 17.12,
-      "tag_count": 7.91,
-      "image_count": 8.75,
-      "content_length": 882.25,
-      "has_numbers": 0.15,
-      "title_hook_count": 0.66
+      "title_length": 6.94,
+      "tag_count": 3.33,
+      "image_count": 2.55,
+      "content_length": 103.61,
+      "has_numbers": 0.01,
+      "title_hook_count": 0.12
     }
   },
   "3": {
-    "count": 175,
-    "avg_engagement": 10590.6,
-    "viral_rate": 9.7,
+    "count": 187,
+    "avg_engagement": 10334.0,
+    "viral_rate": 9.6,
     "features": {
-      "title_length": 19.47,
-      "tag_count": 7.93,
-      "image_count": 8.62,
-      "content_length": 307.03,
-      "has_numbers": 0.99,
-      "title_hook_count": 1.84
+      "title_length": 19.34,
+      "tag_count": 7.77,
+      "image_count": 8.31,
+      "content_length": 277.21,
+      "has_numbers": 1.0,
+      "title_hook_count": 1.83
     }
   },
   "4": {
-    "count": 141,
-    "avg_engagement": 8480.5,
-    "viral_rate": 8.5,
+    "count": 210,
+    "avg_engagement": 22279.3,
+    "viral_rate": 15.7,
     "features": {
-      "title_length": 4.12,
-      "tag_count": 4.25,
-      "image_count": 3.01,
-      "content_length": 116.6,
-      "has_numbers": 0.01,
-      "title_hook_count": 0.06
+      "title_length": 17.51,
+      "tag_count": 7.31,
+      "image_count": 2.84,
+      "content_length": 180.4,
+      "has_numbers": 0.0,
+      "title_hook_count": 0.71
     }
   }
 }

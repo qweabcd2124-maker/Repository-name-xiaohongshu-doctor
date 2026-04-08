@@ -8,6 +8,7 @@ import json
 
 from app.agents.base_agent import BaseAgent
 from app.agents.prompts.growth_agent import SYSTEM_PROMPT
+from app.agents.research_data import build_data_prompt_for_agent
 
 
 class GrowthAgent(BaseAgent):
@@ -52,6 +53,7 @@ class GrowthAgent(BaseAgent):
 - {viral_rate}%
 
 请基于以上数据给出增长策略诊断和具体建议。"""
+        msg += build_data_prompt_for_agent("growth", category)
         return msg
 
     async def diagnose(self, **kwargs) -> dict:

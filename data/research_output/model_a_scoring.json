@@ -1,11 +1,11 @@
 {
   "food": {
     "weights": {
-      "title_quality": 0.615,
-      "content_quality": 0.121,
-      "visual_quality": 0.088,
-      "tag_strategy": 0.103,
-      "engagement_potential": 0.072
+      "title_quality": 0.573,
+      "content_quality": 0.132,
+      "visual_quality": 0.086,
+      "tag_strategy": 0.097,
+      "engagement_potential": 0.111
     },
     "scoring_params": {
       "title_length": {
@@ -42,18 +42,18 @@
       "viral_rate": 10.4,
       "sample_size": 183
     },
-    "regression_r_squared": 0.1049,
+    "regression_r_squared": 0.1064,
     "title_patterns": [],
     "content_structure": [],
     "top_tags": []
   },
   "fashion": {
     "weights": {
-      "title_quality": 0.337,
-      "content_quality": 0.209,
-      "visual_quality": 0.182,
-      "tag_strategy": 0.016,
-      "engagement_potential": 0.256
+      "title_quality": 0.395,
+      "content_quality": 0.125,
+      "visual_quality": 0.25,
+      "tag_strategy": 0.058,
+      "engagement_potential": 0.172
     },
     "scoring_params": {
       "title_length": {
@@ -61,7 +61,7 @@
           "min": 11.0,
           "max": 20.0
         },
-        "viral_avg": 14.5
+        "viral_avg": 14.0
       },
       "tag_count": {
         "optimal": {
@@ -72,36 +72,36 @@
       },
       "content_length": {
         "optimal": {
-          "min": 94.0,
-          "max": 228.0
+          "min": 91.5,
+          "max": 223.75
         }
       },
       "image_count": {
         "optimal": {
-          "min": 1.0,
-          "max": 9.0
+          "min": 2.0,
+          "max": 10.0
         }
       }
     },
     "baseline": {
-      "avg_engagement": 7991.72,
-      "median_engagement": 2400.0,
-      "viral_threshold": 20065.6,
-      "viral_rate": 10.0,
-      "sample_size": 259
+      "avg_engagement": 7507.22,
+      "median_engagement": 2069.0,
+      "viral_threshold": 18037.4,
+      "viral_rate": 10.1,
+      "sample_size": 278
     },
-    "regression_r_squared": 0.0308,
+    "regression_r_squared": 0.0169,
     "title_patterns": [],
     "content_structure": [],
     "top_tags": []
   },
   "tech": {
     "weights": {
-      "title_quality": 0.484,
-      "content_quality": 0.074,
-      "visual_quality": 0.102,
-      "tag_strategy": 0.104,
-      "engagement_potential": 0.236
+      "title_quality": 0.411,
+      "content_quality": 0.125,
+      "visual_quality": 0.103,
+      "tag_strategy": 0.095,
+      "engagement_potential": 0.267
     },
     "scoring_params": {
       "title_length": {
@@ -109,7 +109,7 @@
           "min": 12.0,
           "max": 20.0
         },
-        "viral_avg": 17.64
+        "viral_avg": 17.46
       },
       "tag_count": {
         "optimal": {
@@ -120,8 +120,8 @@
       },
       "content_length": {
         "optimal": {
-          "min": 106.0,
-          "max": 576.0
+          "min": 86.5,
+          "max": 516.5
         }
       },
       "image_count": {
@@ -132,24 +132,24 @@
       }
     },
     "baseline": {
-      "avg_engagement": 1321.38,
-      "median_engagement": 186.0,
-      "viral_threshold": 3341.6,
-      "viral_rate": 10.3,
-      "sample_size": 213
+      "avg_engagement": 1274.57,
+      "median_engagement": 175.0,
+      "viral_threshold": 3325.2,
+      "viral_rate": 10.2,
+      "sample_size": 235
     },
-    "regression_r_squared": 0.1928,
+    "regression_r_squared": 0.1773,
     "title_patterns": [],
     "content_structure": [],
     "top_tags": []
   },
   "travel": {
     "weights": {
-      "title_quality": 0.36,
-      "content_quality": 0.039,
-      "visual_quality": 0.119,
-      "tag_strategy": 0.316,
-      "engagement_potential": 0.167
+      "title_quality": 0.376,
+      "content_quality": 0.05,
+      "visual_quality": 0.12,
+      "tag_strategy": 0.312,
+      "engagement_potential": 0.142
     },
     "scoring_params": {
       "title_length": {
@@ -186,7 +186,55 @@
       "viral_rate": 10.0,
       "sample_size": 130
     },
-    "regression_r_squared": 0.1386,
+    "regression_r_squared": 0.1375,
+    "title_patterns": [],
+    "content_structure": [],
+    "top_tags": []
+  },
+  "lifestyle": {
+    "weights": {
+      "title_quality": 0.407,
+      "content_quality": 0.083,
+      "visual_quality": 0.071,
+      "tag_strategy": 0.277,
+      "engagement_potential": 0.162
+    },
+    "scoring_params": {
+      "title_length": {
+        "optimal": {
+          "min": 10.0,
+          "max": 20.0
+        },
+        "viral_avg": 19.4
+      },
+      "tag_count": {
+        "optimal": {
+          "min": 4,
+          "max": 8,
+          "best": 6
+        }
+      },
+      "content_length": {
+        "optimal": {
+          "min": 23.5,
+          "max": 147.5
+        }
+      },
+      "image_count": {
+        "optimal": {
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "baseline": {
+      "avg_engagement": 8038.06,
+      "median_engagement": 772.5,
+      "viral_threshold": 17097.3,
+      "viral_rate": 10.4,
+      "sample_size": 48
+    },
+    "regression_r_squared": 0.3961,
     "title_patterns": [],
     "content_structure": [],
     "top_tags": []

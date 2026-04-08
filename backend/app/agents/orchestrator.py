@@ -16,6 +16,7 @@ from app.analysis.text_analyzer import TextAnalyzer
 from app.analysis.image_analyzer import ImageAnalyzer
 from app.baseline.comparator import BaselineComparator
 from app.agents.base_agent import MODEL_PRO
+from app.agents.research_data import pre_score
 from app.agents.content_agent import ContentAgent
 from app.agents.visual_agent import VisualAgent
 from app.agents.growth_agent import GrowthAgent
@@ -129,6 +130,17 @@ class Orchestrator:
 
         baseline_comparison = self.baseline_comparator.compare(category, note_features)
 
+        # --- Step 2.5: Model A 预评分 ---
+        model_a_score = pre_score(
+            title=title,
+            content=content,
+            category=category,
+            tag_count=len(tags),
+            image_count=image_analysis.get("image_count", 0) if image_analysis else 0,
+        )
+        baseline_comparison["model_a_pre_score"] = model_a_score
+        logger.info("Model A 预评分: %.1f (%s)", model_a_score["total_score"], model_a_score["level"])
+
         # --- Step 3: 并行 Agent 诊断（Round 1）---
         t1 = time.time()
         content_agent = ContentAgent(model=MODEL_PRO)
@@ -205,9 +217,11 @@ class Orchestrator:
         logger.info("诊断完成 | 总耗时=%.1fs | 总tokens≈%d",
                      total_time, round1_tokens + debate_tokens + judge_tokens)
 
-        return self._assemble_response(
+        result = self._assemble_response(
             final_report, agent_opinions, simulated_comments, debate_timeline
         )
+        result["model_a_pre_score"] = model_a_score
+        return result
 
     async def _run_debate(self, opinions: list[dict], agents: list) -> tuple[list[dict], int]:
         debate_tasks = []

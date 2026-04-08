@@ -286,6 +286,141 @@ async def diagnose_note(
     return report
 
 
+@router.post("/pre-score")
+async def pre_score_note(
+    title: str = Form(""),
+    content: str = Form(""),
+    category: str = Form("lifestyle"),
+    tags: str = Form(""),
+    image_count: int = Form(0),
+):
+    """Instant Model A pre-score (no LLM, pure math, <50ms)."""
+    from app.agents.research_data import pre_score, MODEL_PARAMS, CATEGORY_CN
+
+    tag_count = len([t for t in tags.split(",") if t.strip()]) if tags else 0
+    result = pre_score(title, content, category, tag_count, image_count)
+    result["category"] = category
+    result["category_cn"] = CATEGORY_CN.get(category, category)
+    return result
+
+
+@router.post("/diagnose-stream")
+async def diagnose_stream(
+    request: Request,
+    title: str = Form(""),
+    content: str = Form(""),
+    category: str = Form(...),
+    tags: str = Form(""),
+    cover_image: Optional[UploadFile] = File(None),
+    cover_images: Optional[list[UploadFile]] = File(None),
+    video_file: Optional[UploadFile] = File(None),
+):
+    """SSE streaming diagnosis — sends progress events as agents complete."""
+    import asyncio
+    import json as json_mod
+    from starlette.responses import StreamingResponse
+    from app.agents.orchestrator import Orchestrator
+    from app.agents.research_data import pre_score as _pre_score
+
+    # Parse inputs (same as /diagnose)
+    image_files: list[UploadFile] = []
+    if cover_image is not None:
+        image_files.append(cover_image)
+    if cover_images:
+        image_files.extend(cover_images)
+    if len(image_files) > MAX_IMAGE_COUNT:
+        raise HTTPException(400, f"最多只允许上传 {MAX_IMAGE_COUNT} 张图片")
+
+    parsed_images: list[bytes] = []
+    for index, image in enumerate(image_files):
+        parsed_images.append(await _read_and_validate_image(image, f"cover_images[{index}]"))
+
+    video_bytes: Optional[bytes] = None
+    if video_file is not None:
+        video_bytes = await _read_and_validate_video(video_file)
+
+    image_bytes = parsed_images[0] if parsed_images else None
+
+    video_analysis: Optional[dict] = None
+    if image_bytes is None and video_bytes is not None:
+        extracted = _extract_first_video_frame(video_bytes)
+        if extracted is not None:
+            image_bytes = extracted
+
+        mime_for_video = (video_file.content_type if video_file else None) or "video/mp4"
+        if mime_for_video in MIMO_VIDEO_MIME:
+            try:
+                from app.analysis.video_analyzer import VideoAnalyzer
+                video_url = _store_temp_video_and_build_url(request, video_bytes, mime_for_video)
+                analyzer = VideoAnalyzer()
+                video_analysis = await analyzer.analyze(video_url, prompt_hint=f"title={title[:80]} | category={category}")
+            except Exception as e:
+                logger.warning("Video understanding failed: %s", e)
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+
+    if image_bytes and not title.strip():
+        from app.agents.base_agent import _get_client
+        from app.analysis.ocr_processor import OCRProcessor
+        ocr = OCRProcessor()
+        ocr_result = await ocr.extract_text(image_bytes, client=_get_client())
+        if ocr_result.get("title"):
+            title = ocr_result["title"]
+        if not content.strip() and ocr_result.get("content"):
+            content = ocr_result["content"]
+        if not tag_list and ocr_result.get("tags"):
+            tag_list = ocr_result["tags"]
+
+    if not title.strip():
+        raise HTTPException(400, "请输入标题，或上传可识别标题的图片/视频")
+
+    # --- SSE generator ---
+    async def event_generator():
+        def sse(event: str, data: dict) -> str:
+            return f"event: {event}\ndata: {json_mod.dumps(data, ensure_ascii=False)}\n\n"
+
+        # 1) Instant pre-score
+        score = _pre_score(title, content, category, len(tag_list),
+                           image_bytes is not None and 1 or 0)
+        yield sse("pre_score", {"title": title, "category": category, **score})
+
+        # 2) Run orchestrator with progress
+        orchestrator = Orchestrator()
+
+        # Patch orchestrator to emit progress events
+        progress_events: list[tuple[str, dict]] = []
+        _orig_run = orchestrator.run
+
+        async def _patched_run(**kwargs):
+            # We can't easily hook into the middle of orchestrator.run,
+            # so we just run it and send the result at the end.
+            return await _orig_run(**kwargs)
+
+        try:
+            # Send "agents_start" event
+            yield sse("progress", {"step": "agents_start", "message": "5 位 AI 专家开始并行诊断..."})
+
+            report = await orchestrator.run(
+                title=title, content=content, category=category,
+                tags=tag_list, cover_image=image_bytes, video_analysis=video_analysis,
+            )
+
+            yield sse("progress", {"step": "agents_done", "message": "诊断完成，正在生成报告..."})
+
+            # 3) Final result
+            yield sse("result", report)
+
+        except Exception as e:
+            logger.error("Stream diagnose error: %s", e)
+            yield sse("error", {"message": str(e)})
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     """Upload one image and return visual analysis result."""

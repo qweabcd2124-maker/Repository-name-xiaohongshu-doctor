@@ -69,6 +69,15 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api")
 
+# Serve research whitepaper page
+RESEARCH_HTML = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "research_whitepaper.html")
+
+@app.get("/research")
+async def serve_research():
+    if os.path.isfile(RESEARCH_HTML):
+        return FileResponse(RESEARCH_HTML, media_type="text/html")
+    return {"error": "Research page not found"}
+
 # Serve frontend static files if built
 if os.path.isdir(FRONTEND_DIST):
     from starlette.middleware.base import BaseHTTPMiddleware
@@ -81,7 +90,8 @@ if os.path.isdir(FRONTEND_DIST):
             path = request.url.path
             if (response.status_code == 404
                     and not path.startswith("/api")
-                    and not path.startswith("/assets")):
+                    and not path.startswith("/assets")
+                    and path != "/research"):
                 return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
             return response
 

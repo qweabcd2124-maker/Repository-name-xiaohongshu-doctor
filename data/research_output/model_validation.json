@@ -1,47 +1,57 @@
 {
   "food": {
     "sample_size": 183,
-    "score_engagement_correlation": 0.0947,
-    "p_value": 0.202414,
+    "score_engagement_correlation": 0.0888,
+    "p_value": 0.231939,
     "significant": false,
-    "viral_avg_score": 78.6,
-    "normal_avg_score": 73.8,
-    "score_gap": 4.8,
-    "classification_accuracy": 50.8
+    "viral_avg_score": 77.7,
+    "normal_avg_score": 73.3,
+    "score_gap": 4.4,
+    "classification_accuracy": 51.4
   },
   "fashion": {
-    "sample_size": 259,
-    "score_engagement_correlation": -0.1027,
-    "p_value": 0.099218,
+    "sample_size": 278,
+    "score_engagement_correlation": -0.0264,
+    "p_value": 0.661594,
     "significant": false,
-    "viral_avg_score": 71.5,
-    "normal_avg_score": 72.4,
-    "score_gap": -0.9,
-    "classification_accuracy": 50.2
+    "viral_avg_score": 70.3,
+    "normal_avg_score": 71.7,
+    "score_gap": -1.4,
+    "classification_accuracy": 49.3
   },
   "tech": {
-    "sample_size": 213,
-    "score_engagement_correlation": 0.1927,
-    "p_value": 0.004777,
+    "sample_size": 235,
+    "score_engagement_correlation": 0.1814,
+    "p_value": 0.005278,
     "significant": true,
-    "viral_avg_score": 75.4,
-    "normal_avg_score": 73.1,
-    "score_gap": 2.3,
-    "classification_accuracy": 49.3
+    "viral_avg_score": 74.4,
+    "normal_avg_score": 73.3,
+    "score_gap": 1.1,
+    "classification_accuracy": 50.2
   },
   "travel": {
     "sample_size": 130,
-    "score_engagement_correlation": -0.0645,
-    "p_value": 0.466146,
+    "score_engagement_correlation": -0.0652,
+    "p_value": 0.461225,
     "significant": false,
-    "viral_avg_score": 72.3,
-    "normal_avg_score": 70.3,
-    "score_gap": 2.0,
-    "classification_accuracy": 52.3
+    "viral_avg_score": 72.9,
+    "normal_avg_score": 70.8,
+    "score_gap": 2.1,
+    "classification_accuracy": 53.8
+  },
+  "lifestyle": {
+    "sample_size": 48,
+    "score_engagement_correlation": 0.4844,
+    "p_value": 0.000486,
+    "significant": true,
+    "viral_avg_score": 75.3,
+    "normal_avg_score": 72.7,
+    "score_gap": 2.6,
+    "classification_accuracy": 54.2
   },
   "_overall": {
-    "total_samples": 785,
-    "correlation": 0.0153,
-    "p_value": 0.667672
+    "total_samples": 874,
+    "correlation": 0.0536,
+    "p_value": 0.113585
   }
 }
