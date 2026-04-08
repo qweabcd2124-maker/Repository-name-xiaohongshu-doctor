@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box, Typography, Button, Stack, Chip, CircularProgress,
@@ -43,6 +43,7 @@ const SLOTS: SlotConfig[] = [
 
 const LINK_REGEX = /https?:\/\/\S+/gi;
 const ORDERED_SLOT_KEYS: SlotType[] = ["cover", "content", "profile", "comments"];
+const DRAFT_KEY = "noterx_screenshot_draft_v1";
 
 /**
  * 截图多维度分析页
@@ -55,6 +56,7 @@ export default function ScreenshotAnalysis() {
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [recognitions, setRecognitions] = useState<Record<string, QuickRecognizeResult>>({});
   const [recognizing, setRecognizing] = useState<Record<string, boolean>>({});
+  const [recognitionErrors, setRecognitionErrors] = useState<Record<string, string>>({});
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [extraText, setExtraText] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -62,6 +64,45 @@ export default function ScreenshotAnalysis() {
   const [error, setError] = useState("");
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const videoInputRef = useRef<HTMLInputElement | null>(null);
+  const slotCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  /**
+   * 恢复可持久化的草稿信息（场景与补充文本）。
+   * 文件对象出于浏览器安全限制无法跨刷新恢复。
+   */
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as { scenario?: Scenario; extraText?: string };
+      if (draft.scenario) setScenario(draft.scenario);
+      if (typeof draft.extraText === "string") setExtraText(draft.extraText);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  /** 持久化用户输入草稿，避免返回后重填。 */
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ scenario, extraText }),
+      );
+    } catch {
+      // ignore
+    }
+  }, [scenario, extraText]);
+
+  /** 上传成功后自动滚动到下一步，降低操作中断感。 */
+  useEffect(() => {
+    if (!scenario || currentGuideIndex < 0) return;
+    const nextKey = ORDERED_SLOT_KEYS[currentGuideIndex];
+    const nextCard = slotCardRefs.current[nextKey];
+    if (nextCard) {
+      nextCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [scenario, currentGuideIndex]);
 
   const handleFile = useCallback(async (slot: SlotType, file: File) => {
     setFiles((p) => ({ ...p, [slot]: file }));
@@ -73,23 +114,57 @@ export default function ScreenshotAnalysis() {
     try {
       const res = await quickRecognize(file, slot);
       setRecognitions((p) => ({ ...p, [slot]: res }));
+      setRecognitionErrors((p) => {
+        const n = { ...p };
+        delete n[slot];
+        return n;
+      });
     } catch (e) {
-      console.warn("快速识别失败", e);
+      const msg = e instanceof Error ? e.message : "快速识别失败，请重试";
+      setRecognitionErrors((p) => ({ ...p, [slot]: msg }));
     } finally {
       setRecognizing((p) => ({ ...p, [slot]: false }));
     }
   }, []);
 
+  /** 重试单张截图的快识调用。 */
+  const retryRecognize = useCallback(async (slot: SlotType) => {
+    const file = files[slot];
+    if (!file) return;
+    setRecognizing((p) => ({ ...p, [slot]: true }));
+    try {
+      const res = await quickRecognize(file, slot);
+      setRecognitions((p) => ({ ...p, [slot]: res }));
+      setRecognitionErrors((p) => {
+        const n = { ...p };
+        delete n[slot];
+        return n;
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "快速识别失败，请重试";
+      setRecognitionErrors((p) => ({ ...p, [slot]: msg }));
+    } finally {
+      setRecognizing((p) => ({ ...p, [slot]: false }));
+    }
+  }, [files]);
+
   const removeFile = useCallback((slot: string) => {
     setFiles((p) => { const n = { ...p }; delete n[slot]; return n; });
     setPreviews((p) => { const n = { ...p }; delete n[slot]; return n; });
     setRecognitions((p) => { const n = { ...p }; delete n[slot]; return n; });
+    setRecognitionErrors((p) => { const n = { ...p }; delete n[slot]; return n; });
   }, []);
 
   const filledCount = Object.values(files).filter(Boolean).length;
   const canSubmit = filledCount >= 1 && !analyzing;
   const currentGuideIndex = ORDERED_SLOT_KEYS.findIndex((key) => !files[key]);
   const visibleGuideCount = currentGuideIndex === -1 ? ORDERED_SLOT_KEYS.length : currentGuideIndex + 1;
+  const nextSlotLabel = currentGuideIndex === -1
+    ? ""
+    : (SLOTS.find((s) => s.key === ORDERED_SLOT_KEYS[currentGuideIndex])?.label ?? "下一步");
+  const submitLabel = currentGuideIndex === -1
+    ? "开始深度分析"
+    : (filledCount === 0 ? `继续上传（还差${nextSlotLabel}）` : `开始深度分析（建议补${nextSlotLabel}）`);
 
   const handleSubmit = async () => {
     if (!scenario) return;
@@ -280,10 +355,15 @@ export default function ScreenshotAnalysis() {
               const preview = previews[slot.key];
               const recog = recognitions[slot.key];
               const isRecog = recognizing[slot.key];
+              const recogError = recognitionErrors[slot.key];
               const isLocked = idx > 0 && !files[ORDERED_SLOT_KEYS[idx - 1]];
 
               return (
-                <Box key={slot.key} sx={{ p: 2.5, borderRadius: "16px", bgcolor: "#fff", border: "1px solid #f0f0f0" }}>
+                <Box
+                  key={slot.key}
+                  ref={(el) => { slotCardRefs.current[slot.key] = el; }}
+                  sx={{ p: 2.5, borderRadius: "16px", bgcolor: "#fff", border: "1px solid #f0f0f0" }}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
                     <Box sx={{ color: "#ff2442", display: "flex" }}>{slot.icon}</Box>
                     <Box sx={{ flex: 1 }}>
@@ -327,6 +407,13 @@ export default function ScreenshotAnalysis() {
                               {recog.summary && (
                                 <Typography sx={{ fontSize: 12, color: "#666" }}>{recog.summary}</Typography>
                               )}
+                            </Box>
+                          ) : recogError ? (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                              <Typography sx={{ fontSize: 12, color: "#dc2626" }}>识别失败：{recogError}</Typography>
+                              <Button size="small" onClick={() => retryRecognize(slot.key)} sx={{ minWidth: 0, px: 1 }}>
+                                重试
+                              </Button>
                             </Box>
                           ) : null}
                         </Box>
@@ -435,7 +522,7 @@ export default function ScreenshotAnalysis() {
                   "&.Mui-disabled": { bgcolor: "#f0f0f0", color: "#bbb" },
                 }}
               >
-                {analyzing ? <CircularProgress size={22} color="inherit" /> : "开始深度分析"}
+                {analyzing ? <CircularProgress size={22} color="inherit" /> : submitLabel}
               </Button>
             </Box>
           </Stack>
