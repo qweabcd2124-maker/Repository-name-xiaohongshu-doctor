@@ -130,6 +130,7 @@ export default function Home() {
     let bestCategory = "";
     let bestSummary = "";
 
+    // 优先从 content 类型提取，但如果没有 content 类型，也从其他类型提取
     for (const [, r] of successRecogEntries) {
       if ((r.slot_type || "").toLowerCase() === "content") {
         if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
@@ -137,6 +138,13 @@ export default function Home() {
       }
       if (!bestCategory && r.category?.trim()) bestCategory = r.category.trim();
       if (!bestSummary && r.summary?.trim()) bestSummary = r.summary.trim();
+    }
+    // Fallback: 如果 content 类型没提取到，从任意类型取
+    if (!bestTitle || !bestContent) {
+      for (const [, r] of successRecogEntries) {
+        if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
+        if (!bestContent && r.content_text?.trim()) bestContent = r.content_text.trim();
+      }
     }
 
     return { bestTitle, bestContent, bestCategory, bestSummary };
@@ -338,7 +346,7 @@ export default function Home() {
     [successRecogEntries],
   );
   const hasDetailScreenshot = recognizedSlots.has("content");
-  const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs && !isFormBlocked && hasDetailScreenshot;
+  const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs && !isFormBlocked;
   const aiSuggestion = useMemo(() => {
     if (files.length === 0) return "";
     if (!allRecognitionDone) return "";
@@ -347,7 +355,7 @@ export default function Home() {
     const hasProfile = recognizedSlots.has("profile");
     const hasComments = recognizedSlots.has("comments");
 
-    if (!hasDetailScreenshot) return "未检测到笔记详情页截图，请上传包含标题+正文/标签的详情页，AI 才会提取笔记内容。";
+    if (!hasDetailScreenshot) return "建议补充笔记详情页截图（含标题+正文），AI 提取效果更好。也可手动输入后直接诊断。";
     if (!hasBody) return "已检测到详情页，但正文仍不清晰，建议补充一张更清晰的详情截图。";
     if (!hasCover) return "可补充封面截图，提升视觉内容判断。";
     if (!hasProfile) return "可补充主页截图，帮助判断账号定位。";
@@ -735,7 +743,7 @@ export default function Home() {
               {submitBtn}
               {files.length > 0 && allRecognitionDone && !hasDetailScreenshot && (
                 <Alert severity="warning" sx={{ mt: 1 }}>
-                  未检测到“笔记详情页”截图，暂不支持提交。请补充上传后再继续。
+                  建议补充笔记详情页截图，AI 提取效果更好。也可手动输入标题后直接诊断。
                 </Alert>
               )}
             </Box>
@@ -811,7 +819,7 @@ export default function Home() {
           {submitBtn}
           {files.length > 0 && allRecognitionDone && !hasDetailScreenshot && (
             <Alert severity="warning">
-              未检测到“笔记详情页”截图，暂不支持提交。请补充上传后再继续。
+              建议补充笔记详情页截图，AI 提取效果更好。也可手动输入标题后直接诊断。
             </Alert>
           )}
         </Stack>
