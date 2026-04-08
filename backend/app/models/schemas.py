@@ -3,6 +3,7 @@ Pydantic 请求 / 响应模型
 """
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class DiagnoseRequest(BaseModel):
@@ -63,3 +64,33 @@ class DiagnoseResponse(BaseModel):
     optimized_title: Optional[str] = None
     optimized_content: Optional[str] = None
     cover_direction: Optional[CoverDirection] = None
+
+
+# --------------- 历史记录 ---------------
+
+class HistoryCreateRequest(BaseModel):
+    """保存诊断历史"""
+    title: str
+    category: str
+    report: dict
+
+
+class HistoryListItem(BaseModel):
+    """历史列表项（不含完整报告）"""
+    id: str
+    title: str
+    category: str
+    overall_score: float
+    grade: str
+    created_at: str
+
+
+class HistoryDetail(BaseModel):
+    """历史详情（含完整报告）"""
+    id: str
+    title: str
+    category: str
+    overall_score: float
+    grade: str
+    created_at: str
+    report: dict

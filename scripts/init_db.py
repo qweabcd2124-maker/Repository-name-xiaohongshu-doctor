@@ -50,6 +50,23 @@ def init_database():
     """)
 
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS diagnosis_history (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            overall_score REAL,
+            grade TEXT,
+            report_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_history_created
+        ON diagnosis_history(created_at DESC)
+    """)
+
+    cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category)
     """)
     cursor.execute("""

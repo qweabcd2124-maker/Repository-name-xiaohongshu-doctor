@@ -2,11 +2,46 @@
 NoteRx 后端入口
 """
 import logging
+import os
+import sqlite3
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router as api_router
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "baseline.db")
+
+
+def _ensure_history_table():
+    """启动时自动创建 diagnosis_history 表（如不存在）"""
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS diagnosis_history (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            overall_score REAL,
+            grade TEXT,
+            report_json TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_history_created
+        ON diagnosis_history(created_at DESC)
+    """)
+    conn.commit()
+    conn.close()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """应用生命周期：启动时自动建表"""
+    _ensure_history_table()
+    yield
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,6 +52,7 @@ app = FastAPI(
     title="NoteRx API",
     description="AI驱动的小红书笔记诊断平台",
     version="0.2.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

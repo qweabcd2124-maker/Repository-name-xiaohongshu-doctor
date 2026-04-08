@@ -4,6 +4,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import HistoryIcon from "@mui/icons-material/History";
 import type { DiagnoseResult } from "../utils/api";
 import ScoreCard from "../components/ScoreCard";
 import RadarChart from "../components/RadarChart";
@@ -73,7 +74,9 @@ export default function Report() {
             <Typography sx={{ fontSize: 20 }}>💊</Typography>
             <Typography sx={{ fontWeight: 700 }} color="primary">诊断报告</Typography>
           </Box>
-          <Box sx={{ width: 90 }} />
+          <Button startIcon={<HistoryIcon />} onClick={() => navigate("/history")} size="small" color="inherit">
+            历史
+          </Button>
         </Box>
       </Box>
 

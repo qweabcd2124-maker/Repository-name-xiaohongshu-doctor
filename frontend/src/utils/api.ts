@@ -113,4 +113,61 @@ export async function getBaseline(category: string) {
   return data;
 }
 
+// --------------- 历史记录 ---------------
+
+export interface HistoryListItem {
+  id: string;
+  title: string;
+  category: string;
+  overall_score: number;
+  grade: string;
+  created_at: string;
+}
+
+export interface HistoryDetail extends HistoryListItem {
+  report: DiagnoseResult;
+}
+
+/**
+ * @param params - title, category, report(完整 DiagnoseResult)
+ * @returns {id: string}
+ */
+export async function saveHistory(params: {
+  title: string;
+  category: string;
+  report: DiagnoseResult;
+}): Promise<{ id: string }> {
+  const { data } = await api.post<{ id: string }>("/history", params);
+  return data;
+}
+
+/**
+ * @param limit - 每页条数
+ * @param offset - 偏移量
+ */
+export async function getHistoryList(
+  limit = 20,
+  offset = 0
+): Promise<HistoryListItem[]> {
+  const { data } = await api.get<HistoryListItem[]>("/history", {
+    params: { limit, offset },
+  });
+  return data;
+}
+
+/**
+ * @param id - 记录 UUID
+ */
+export async function getHistoryDetail(id: string): Promise<HistoryDetail> {
+  const { data } = await api.get<HistoryDetail>(`/history/${id}`);
+  return data;
+}
+
+/**
+ * @param id - 记录 UUID
+ */
+export async function deleteHistory(id: string): Promise<void> {
+  await api.delete(`/history/${id}`);
+}
+
 export default api;

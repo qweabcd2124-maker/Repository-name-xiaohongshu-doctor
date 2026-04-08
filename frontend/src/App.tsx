@@ -4,6 +4,7 @@ import theme from "./theme";
 import Home from "./pages/Home";
 import Diagnosing from "./pages/Diagnosing";
 import Report from "./pages/Report";
+import History from "./pages/History";
 import ToastContainer from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
@@ -21,6 +22,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/diagnosing" element={<Diagnosing />} />
             <Route path="/report" element={<Report />} />
+            <Route path="/history" element={<History />} />
           </Routes>
           <ToastContainer />
         </BrowserRouter>

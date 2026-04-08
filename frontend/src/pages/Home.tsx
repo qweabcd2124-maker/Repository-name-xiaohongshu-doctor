@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LinkIcon from "@mui/icons-material/Link";
+import HistoryIcon from "@mui/icons-material/History";
 import UploadZone from "../components/UploadZone";
 import CategorySelector from "../components/CategorySelector";
 import { parseLink } from "../utils/api";
@@ -60,7 +61,16 @@ export default function Home() {
       }}
     >
       {/* Header */}
-      <Box sx={{ pt: 6, pb: 2, textAlign: "center" }}>
+      <Box sx={{ pt: 6, pb: 2, textAlign: "center", position: "relative" }}>
+        <Button
+          startIcon={<HistoryIcon />}
+          onClick={() => navigate("/history")}
+          size="small"
+          color="inherit"
+          sx={{ position: "absolute", right: 16, top: 24 }}
+        >
+          历史记录
+        </Button>
         <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, mb: 1 }}>
           <Typography fontSize={40}>💊</Typography>
           <Typography
