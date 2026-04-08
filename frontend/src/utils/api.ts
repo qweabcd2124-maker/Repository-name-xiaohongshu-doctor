@@ -14,6 +14,8 @@ export interface DiagnoseParams {
   category: string;
   tags: string;
   coverImage?: File;
+  coverImages?: File[];
+  videoFile?: File;
 }
 
 export interface AgentOpinion {
@@ -89,6 +91,12 @@ export async function diagnoseNote(
   formData.append("tags", params.tags);
   if (params.coverImage) {
     formData.append("cover_image", params.coverImage);
+  }
+  if (params.coverImages && params.coverImages.length > 0) {
+    params.coverImages.forEach((file) => formData.append("cover_images", file));
+  }
+  if (params.videoFile) {
+    formData.append("video_file", params.videoFile);
   }
 
   const { data } = await api.post<DiagnoseResult>("/diagnose", formData, {

@@ -13,10 +13,35 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-for p in [Path(__file__).resolve().parents[2] / ".env", Path.cwd() / ".env", Path.cwd().parent / ".env"]:
-    if p.exists():
-        load_dotenv(p)
-        break
+
+def _load_env_files() -> None:
+    """
+    按优先级加载环境变量：
+    1) 仓库根目录 .env（推荐放真实密钥）
+    2) backend/.env
+    3) 当前工作目录及其父目录 .env（兼容不同启动方式）
+    先加载的值优先（override=False），避免被占位值覆盖。
+    """
+    current = Path(__file__).resolve()
+    backend_root = current.parents[2]
+    repo_root = current.parents[3]
+    candidates = [
+        repo_root / ".env",
+        backend_root / ".env",
+        Path.cwd() / ".env",
+        Path.cwd().parent / ".env",
+    ]
+    seen: set[Path] = set()
+    for p in candidates:
+        rp = p.resolve()
+        if rp in seen:
+            continue
+        seen.add(rp)
+        if rp.exists():
+            load_dotenv(rp, override=False)
+
+
+_load_env_files()
 
 logger = logging.getLogger("noterx.agent")
 
@@ -230,12 +255,19 @@ class BaseAgent:
             return self._error_response(str(e))
 
     def _error_response(self, error_msg: str) -> dict:
+        lower_msg = (error_msg or "").lower()
+        suggestions = ["请稍后重试"]
+        if "invalid api key" in lower_msg or "invalid_key" in lower_msg or "401" in lower_msg:
+            suggestions = [
+                "API Key 无效：请检查 OPENAI_API_KEY 是否正确、未过期，并确认与 OPENAI_BASE_URL 对应。",
+                "如果使用仓库根目录 .env 启动，请确认 backend/.env 里的占位值不会覆盖真实配置。",
+            ]
         return {
             "agent_name": self.agent_name,
             "dimension": "error",
             "score": 0,
             "issues": [f"诊断出错: {error_msg}"],
-            "suggestions": ["请稍后重试"],
+            "suggestions": suggestions,
             "reasoning": f"Error: {error_msg}",
         }
 
