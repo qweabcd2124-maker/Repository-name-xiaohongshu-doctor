@@ -9,7 +9,6 @@ import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
 import CameraAltOutlined from "@mui/icons-material/CameraAltOutlined";
 import LinkIcon from "@mui/icons-material/Link";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
-import HistoryIcon from "@mui/icons-material/History";
 import CategoryPicker from "../components/CategoryPicker";
 import UploadZone from "../components/UploadZone";
 import { parseLink } from "../utils/api";
@@ -295,9 +294,9 @@ export default function Home() {
                   <Box sx={{ px: 1, py: 0.25, borderRadius: "6px", bgcolor: "#f5f5f5" }}>
                     <Typography sx={{ fontSize: 12, fontWeight: 600, color: GRADE_COLOR[h.grade] || "#999" }}>{h.grade}</Typography>
                   </Box>
-                  {h.report && (
+                  {h.report ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                  )}
+                  ) : null}
                 </Box>
               </Box>
             ))}
