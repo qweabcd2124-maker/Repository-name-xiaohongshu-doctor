@@ -132,9 +132,13 @@ export default function Home() {
 
     // 优先从 content 类型提取，但如果没有 content 类型，也从其他类型提取
     for (const [, r] of successRecogEntries) {
-      if ((r.slot_type || "").toLowerCase() === "content") {
+      const st = (r.slot_type || "").toLowerCase();
+      if (st === "content") {
         if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
         if (!bestContent && r.content_text?.trim()) bestContent = r.content_text.trim();
+      }
+      if (st === "cover" && !bestTitle && r.title?.trim()) {
+        bestTitle = r.title.trim();
       }
       if (!bestCategory && r.category?.trim()) bestCategory = r.category.trim();
       if (!bestSummary && r.summary?.trim()) bestSummary = r.summary.trim();
@@ -221,7 +225,7 @@ export default function Home() {
       const res = await quickRecognize(file, slotHint);
       setAiRecogs((p) => ({ ...p, [key]: res }));
     } catch {
-      setAiRecogs((p) => ({ ...p, [key]: { success: false, slot_type: "unknown", category: "", summary: "", error: "识别失败" } }));
+      setAiRecogs((p) => ({ ...p, [key]: { success: false, slot_type: "unknown", extra_slots: [], category: "", summary: "", error: "识别失败" } }));
     } finally {
       recognizeInFlightRef.current.delete(key);
       setAiLoading((p) => ({ ...p, [key]: false }));
@@ -317,12 +321,20 @@ export default function Home() {
       return { label: "分析中", tone: "info" as const, text: "正在汇总识别结果并回填表单..." };
     }
     if (allRecognitionDone) {
+      if (allFailed) {
+        return {
+          label: "识别未成功",
+          tone: "warning" as const,
+          text: "AI 未能识别当前图片，请查看下方说明或手动填写后再诊断。",
+        };
+      }
       return { label: "已就绪", tone: "success" as const, text: "识别完成，可以继续发起诊断。" };
     }
     return null;
-  }, [files.length, uploadingPulse, pendingRecognition, analyzingPulse, allRecognitionDone]);
+  }, [files.length, uploadingPulse, pendingRecognition, analyzingPulse, allRecognitionDone, allFailed]);
 
-  const lockInputs = !!processingStatus && processingStatus.label !== "已就绪";
+  /** 仅在「正在上传 / 识别 / 汇总动画」时锁表单；识别结束（含全部失败）后允许手动编辑 */
+  const lockInputs = uploadingPulse || pendingRecognition || analyzingPulse;
   const isFormBlocked = files.length > 0 && !allRecognitionDone;
 
   const handleSubmit = () => {
@@ -337,14 +349,20 @@ export default function Home() {
     });
   };
 
-  const recognizedSlots = useMemo(
-    () => new Set(
-      successRecogEntries
-        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type.toLowerCase() : ""))
-        .filter(Boolean),
-    ),
-    [successRecogEntries],
-  );
+  const recognizedSlots = useMemo(() => {
+    const s = new Set<string>();
+    const allow = new Set(["cover", "content", "profile", "comments"]);
+    for (const [, r] of successRecogEntries) {
+      const main = typeof r.slot_type === "string" ? r.slot_type.toLowerCase() : "";
+      if (main && allow.has(main)) s.add(main);
+      const extras = Array.isArray(r.extra_slots) ? r.extra_slots : [];
+      for (const e of extras) {
+        const x = String(e).toLowerCase();
+        if (allow.has(x)) s.add(x);
+      }
+    }
+    return s;
+  }, [successRecogEntries]);
   const hasDetailScreenshot = recognizedSlots.has("content");
   const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs && !isFormBlocked;
   const aiSuggestion = useMemo(() => {

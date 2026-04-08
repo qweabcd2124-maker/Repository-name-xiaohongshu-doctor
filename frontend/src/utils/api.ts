@@ -263,6 +263,8 @@ export type SlotType = "cover" | "content" | "profile" | "comments";
 export interface QuickRecognizeResult {
   success: boolean;
   slot_type: string;
+  /** 同屏多区域时附加类型，如分屏含评论区时为 ["comments"] */
+  extra_slots?: string[];
   category: string;
   title?: string;
   content_text?: string;

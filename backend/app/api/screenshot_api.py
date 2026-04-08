@@ -1,4 +1,4 @@
-"""
+﻿"""
 多维度截图上传 + AI 快速识别 + 全量深度分析 API
 支持封面、正文、主页、评论区截图上传及视频录屏。
 """
@@ -32,20 +32,26 @@ SLOT_LABELS = {
     "comments": "评论区截图",
 }
 
-_QUICK_PROMPT = """你是一个小红书内容理解助手。请快速分析这张截图。
+_QUICK_PROMPT = """你是一个小红书内容理解助手。请快速、准确地分析这张截图。
 
 规则：
-1) 判断截图类型 slot_type：cover/content/profile/comments/other
-2) 判断垂类 category（穿搭、美食、数码、旅行、美妆、健身、生活、家居等）
-3) 提取标题 title：只要图中能看到任何标题文字就提取，看不到就空字符串
-4) 提取正文 content_text：只要图中能看到正文/描述文字就提取，看不到就空字符串
-5) summary：1-2句概括这张图的关键信息
-6) confidence：识别可信度 0~1
+1) slot_type：cover / content / profile / comments / other
+   - 「笔记详情」：标题 + 正文/标签所在区域（含发布编辑态）。
+   - 若**同一张图**内同时有「笔记详情区」与「评论区」（左右/上下分屏、画中画、拼图），主类型**必须**为 **content**：从**详情区**提取 title、content_text，勿把评论列表当正文；仅当整屏几乎只有评论、看不到详情正文时，才判 comments。
+   - 单图仅为封面、主页、纯评论单屏时，按单一类型判定。
+2) extra_slots：数组。主类型为 content 且同屏明显含评论区时包含 "comments"；否则 []。
+3) category：垂类（穿搭、美食、数码、旅行、美妆、健身、生活、家居等）。
+4) title / content_text：
+   - content：尽力提取可见标题与正文/标签。
+   - cover：封面大字主标题写入 title；正文一般 content_text 留空。
+   - profile / comments / other：以该界面为主时 title、content_text 可优先留空；**但画面中若有清晰的笔记标题或封面主标题，仍写入 title**；勿把评论区句子当正文写入 content_text。
+5) summary：1～2 句；分屏可注明含详情与评论。
+6) confidence：0～1。
 
-重要：不管截图类型是什么，只要能看到标题或正文就必须提取！不要因为类型是 cover 就不提取标题。
+重要：封面主标题、笔记标题只要清晰务必写入 title；不要因类型误判就留空。看不清则不臆造。
 
 仅输出 JSON：
-{"slot_type": "cover|content|profile|comments|other", "category": "类别", "title": "标题或空字符串", "content_text": "正文或空字符串", "summary": "摘要", "confidence": 0.0-1.0}"""
+{"slot_type": "cover|content|profile|comments|other", "extra_slots": [], "category": "", "title": "", "content_text": "", "summary": "", "confidence": 0.0}"""
 
 _DEEP_PROMPT_COVER = """分析这张封面截图的视觉吸引力，输出 JSON：
 {"visual_score": 0-100, "color_scheme": "配色描述", "composition": "构图评价", "text_overlay": "文字覆盖率评价", "suggestions": ["建议1", "建议2"]}"""
@@ -82,6 +88,19 @@ def _normalize_tags(tags: list[object]) -> str:
             continue
         cleaned.append(t if t.startswith("#") else f"#{t}")
     return " ".join(cleaned)
+
+
+def _normalize_extra_slots(raw: object) -> list[str]:
+    """将模型返回的 extra_slots 规范为 cover/content/profile/comments 子集。"""
+    allowed = {"cover", "content", "profile", "comments"}
+    if not isinstance(raw, list):
+        return []
+    out: list[str] = []
+    for item in raw:
+        t = _normalize_slot_type(item)
+        if t in allowed and t not in out:
+            out.append(t)
+    return out
 
 
 def _normalize_slot_type(raw: object) -> str:
@@ -220,9 +239,7 @@ async def quick_recognize(
     if slot_hint and slot_hint in SLOT_LABELS:
         prompt += f"\n提示：用户表明这是一张「{SLOT_LABELS[slot_hint]}」。"
 
-    quick_model = (os.getenv("LLM_MODEL_QUICK_RECOGNIZE") or "").strip() or os.getenv(
-        "LLM_MODEL_OMNI", "mimo-v2-omni"
-    )
+    # 快识走 _vision_call 默认 LLM_MODEL_OMNI（多模态）；勿单独改用纯文本模型。
     quick_max_out = int(os.getenv("QUICK_RECOGNIZE_MAX_COMPLETION_TOKENS", "1200"))
     ocr_cap = int(os.getenv("QUICK_RECOGNIZE_OCR_MAX_TOKENS", "512"))
 
@@ -231,14 +248,25 @@ async def quick_recognize(
             client,
             prompt,
             image_bytes,
-            model=quick_model,
             max_out_tokens=quick_max_out,
             image_mime=image_mime,
         )
         slot_type = _normalize_slot_type(result.get("slot_type", ""))
         result["slot_type"] = slot_type
-        logger.info("快识结果: slot_type=%s, title=%s, category=%s, keys=%s",
-                     slot_type, str(result.get("title", ""))[:50], result.get("category", ""), list(result.keys()))
+        result["extra_slots"] = _normalize_extra_slots(result.get("extra_slots"))
+        if slot_type == "cover":
+            result["content_text"] = ""
+        elif slot_type != "content":
+            result["title"] = ""
+            result["content_text"] = ""
+        logger.info(
+            "快识结果: slot_type=%s extra_slots=%s title=%s category=%s keys=%s",
+            slot_type,
+            result.get("extra_slots"),
+            str(result.get("title", ""))[:50],
+            result.get("category", ""),
+            list(result.keys()),
+        )
 
         # 不管 slot_type，只要 title 或 content_text 为空就尝试 OCR 补充
         content_text = str(result.get("content_text", "")).strip()
@@ -270,6 +298,7 @@ async def quick_recognize(
             "success": False,
             "error": str(e),
             "slot_type": slot_hint or "unknown",
+            "extra_slots": [],
             "category": "",
             "summary": "",
             "title": "",
