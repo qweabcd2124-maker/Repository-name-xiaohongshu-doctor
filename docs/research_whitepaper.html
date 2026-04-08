@@ -353,14 +353,26 @@ footer .motto{color:rgba(255,255,255,0.6);font-size:0.9rem;margin:0.8rem 0}
       <h2>即时体验评分</h2>
     </div>
     <div class="card rv" style="padding:1.5rem">
-      <div style="display:flex;gap:0.6rem;margin-bottom:0.8rem">
-        <select id="d-cat" style="flex:1;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font-size:0.85rem">
-          <option value="food">美食</option><option value="fashion">穿搭</option><option value="tech" selected>科技</option><option value="travel">旅游</option><option value="lifestyle">生活</option>
-        </select>
-        <input id="d-tags" type="number" value="5" min="0" max="20" placeholder="标签" style="width:60px;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;text-align:center">
-        <input id="d-imgs" type="number" value="6" min="0" max="20" placeholder="图片" style="width:60px;padding:0.5rem;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;text-align:center">
+      <div style="margin-bottom:0.6rem">
+        <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:0.3rem">笔记标题</label>
+        <input id="d-title" type="text" value="5分钟学会这个做法，鲜掉眉毛！" placeholder="输入你的笔记标题..." style="width:100%;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;box-sizing:border-box">
       </div>
-      <input id="d-title" type="text" value="5分钟学会这个做法，鲜掉眉毛！" placeholder="输入标题..." style="width:100%;padding:0.6rem 0.8rem;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;margin-bottom:0.8rem;box-sizing:border-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.8rem">
+        <div>
+          <label style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted);margin-bottom:0.2rem">品类</label>
+          <select id="d-cat" style="width:100%;padding:0.45rem 0.4rem;border:1px solid var(--border);border-radius:8px;font-size:0.82rem">
+            <option value="food">美食</option><option value="fashion">穿搭</option><option value="tech" selected>科技</option><option value="travel">旅游</option><option value="lifestyle">生活</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted);margin-bottom:0.2rem">标签数</label>
+          <input id="d-tags" type="number" value="5" min="0" max="20" style="width:100%;padding:0.45rem 0.4rem;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;text-align:center;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted);margin-bottom:0.2rem">图片数</label>
+          <input id="d-imgs" type="number" value="6" min="0" max="20" style="width:100%;padding:0.45rem 0.4rem;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;text-align:center;box-sizing:border-box">
+        </div>
+      </div>
       <button onclick="demo()" class="btn btn-red" style="width:100%;justify-content:center">评分</button>
       <div id="d-res" style="display:none;margin-top:1rem;padding:1rem;background:var(--bg);border-radius:10px">
         <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">
@@ -376,13 +388,53 @@ footer .motto{color:rgba(255,255,255,0.6);font-size:0.9rem;margin:0.8rem 0}
   </div>
 </section>
 
+<!-- ━━ DATA SOURCE & WORKLOAD ━━ -->
+<section style="background:#fff;max-width:none;padding:4rem 1.5rem">
+  <div style="max-width:960px;margin:0 auto">
+    <div class="rv">
+      <div class="sec-tag">Data & Methodology</div>
+      <h2>数据来源与工作量</h2>
+    </div>
+
+    <div class="card-grid rv">
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>数据采集</h4>
+        <p style="font-size:0.85rem;line-height:1.8;margin:0">
+          通过社媒助手工具从小红书公开页面采集，覆盖 <strong>5 个品类</strong>：<br>
+          美食（183条）· 穿搭（278条）· 科技（235条）· 旅游（130条）· 生活（48条）<br>
+          评论数据 2,500 条（穿搭 177 / 科技 282 / 生活 1,744 / 未分类 254）<br>
+          <span style="color:var(--muted);font-size:0.78rem">所有数据已脱敏，仅用于学术研究，不含个人隐私信息</span>
+        </p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--ink)">
+        <h4>工程量</h4>
+        <p style="font-size:0.85rem;line-height:1.8;margin:0">
+          <strong>后端</strong>：FastAPI + 5 Agent 辩论系统 + 评分引擎 + SSE 流式推送<br>
+          <strong>前端</strong>：React 19 + MUI v9 + Framer Motion + ECharts<br>
+          <strong>研究</strong>：10 个 Python 脚本 + 7 种统计方法 + 3 个 LLM 模型<br>
+          <strong>产出</strong>：7 张图表 · 25 条优化提示词 · 独立评分模型 · 完整论文框架<br>
+          <span style="color:var(--muted);font-size:0.78rem">48 小时内由 4 名 13 岁中学生完成全部开发与研究</span>
+        </p>
+      </div>
+    </div>
+
+    <h3 class="rv">技术架构</h3>
+    <div class="card-grid rv">
+      <div class="card"><h4>前端</h4><p>React 19 + TypeScript + MUI v9 · Framer Motion 动画 · ECharts 雷达图 · html2canvas 导出</p></div>
+      <div class="card"><h4>后端</h4><p>FastAPI + SQLite · asyncio 并行 Agent · 多模态文件处理 · SSE 流式诊断</p></div>
+      <div class="card"><h4>AI 模型</h4><p>mimo-v2-pro（诊断）· mimo-v2-omni（视觉）· mimo-v2-flash（快速任务）· 三层模型调度</p></div>
+      <div class="card"><h4>数据科学</h4><p>scikit-learn + scipy · matplotlib · Spearman / 线性回归 / K-Means / PCA / Kruskal-Wallis</p></div>
+    </div>
+  </div>
+</section>
+
 <!-- ━━ FOOTER ━━ -->
 <div class="float-cta"><a href="/app" onclick="return go(event)" class="btn btn-red">立即诊断</a></div>
 
 <footer>
   <div style="margin-bottom:1.2rem"><a href="/app" onclick="return go(event)" class="btn btn-red" style="font-size:1rem">开始诊断你的笔记</a></div>
   <div class="team">Team PageOne</div>
-  <p>姜睦然 · 杨星泽 · 王翔远 · 庞然</p>
+  <p>姜睦然 · 杨曦哲 · 陈宇夏 · 吕思彤</p>
   <p class="motto">用 48 小时证明：13 岁也能做出专业级 AI 产品</p>
   <p style="margin-top:0.5rem;opacity:0.4;font-size:0.75rem">AGI x³ 黑客松 · 2026.04.07—10</p>
 </footer>
