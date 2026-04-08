@@ -72,7 +72,7 @@ export default function Home() {
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of items) {
-        if (item.type.startsWith("image/")) {
+        if (item.type.startsWith("image/") || item.type.startsWith("video/")) {
           const file = item.getAsFile();
           if (file) { setCoverFile(file); setMode("screenshot"); }
           break;
@@ -89,7 +89,14 @@ export default function Home() {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    navigate("/diagnosing", { state: { title, content, tags, category, coverFile } });
+    const isVideo = coverFile && ["video/mp4", "video/quicktime", "video/webm"].includes(coverFile.type);
+    navigate("/diagnosing", {
+      state: {
+        title, content, tags, category,
+        coverFile: isVideo ? null : coverFile,
+        videoFile: isVideo ? coverFile : null,
+      },
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
