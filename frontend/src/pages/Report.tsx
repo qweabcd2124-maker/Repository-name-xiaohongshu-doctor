@@ -1,14 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box, Typography, Button, Alert, Stack, IconButton, Tooltip,
+  Skeleton,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ReplayIcon from "@mui/icons-material/Replay";
-import { motion } from "framer-motion";
-import type { DiagnoseResult } from "../utils/api";
-import { saveHistory } from "../utils/api";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { motion, AnimatePresence } from "framer-motion";
+import type { DiagnoseResult, PreScoreResult } from "../utils/api";
+import { saveHistory, preScore } from "../utils/api";
 import {
   migrateLegacyLocalStorage,
   createPendingId,
@@ -91,10 +93,46 @@ export default function Report() {
     ? params.tags.split(",").filter(Boolean)
     : Array.isArray(params.tags) ? params.tags : [];
 
+  // Re-score with optimized content
+  const [optimizedScore, setOptimizedScore] = useState<PreScoreResult | null>(null);
+  const [rescoring, setRescoring] = useState(false);
+
+  useEffect(() => {
+    if (!report.optimized_title && !report.optimized_content) return;
+    setRescoring(true);
+    preScore({
+      title: report.optimized_title || params.title,
+      content: report.optimized_content || params.content || "",
+      category: params.category,
+      tags: params.tags || "",
+      image_count: 0,
+    }).then((ps) => {
+      setOptimizedScore(ps);
+    }).catch(() => {}).finally(() => setRescoring(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Staggered section reveal
+  const [visibleSections, setVisibleSections] = useState(0);
+  useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setVisibleSections(i);
+      if (i >= 6) clearInterval(timer);
+    }, 150);
+    return () => clearInterval(timer);
+  }, []);
+
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     showToast(`${label}已复制`);
   };
+
+  const sectionAnim = (index: number) => ({
+    initial: { opacity: 0, y: 16 },
+    animate: visibleSections >= index ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 },
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+  });
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#fafafa", pb: 6 }}>
@@ -125,10 +163,10 @@ export default function Report() {
         </Box>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
-        <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 3 }, mt: 2.5 }}>
+      <Box sx={{ maxWidth: 960, mx: "auto", px: { xs: 2, md: 3 }, mt: 2.5 }}>
 
-          {/* Row 1: Score + Radar side by side, Dimension Bars below */}
+          {/* Row 1: Score + Dimension + Radar */}
+          <motion.div {...sectionAnim(1)}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" }, gap: sectionGap, mb: sectionGap }}>
             <Box sx={card}>
               <ScoreCard score={report.overall_score} grade={report.grade} title={params.title} />
@@ -143,7 +181,10 @@ export default function Report() {
             </Box>
           </Box>
 
-          {/* Row 2: Baseline comparison + Suggestions side by side */}
+          </motion.div>
+
+          {/* Row 2: Baseline + Suggestions */}
+          <motion.div {...sectionAnim(2)}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "2fr 3fr" }, gap: sectionGap, mb: sectionGap }}>
             <Box sx={card}>
               <Typography sx={{ fontWeight: 600, fontSize: 15, color: "#262626", mb: 2 }}>基线对比</Typography>
@@ -158,7 +199,10 @@ export default function Report() {
             </Box>
           </Box>
 
-          {/* Row 3: Optimized content */}
+          </motion.div>
+
+          {/* Row 3: Optimized content + score comparison */}
+          <motion.div {...sectionAnim(3)}>
           {(report.optimized_title || report.optimized_content || report.cover_direction) && (
             <Box sx={{ ...card, mb: sectionGap }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -178,6 +222,40 @@ export default function Report() {
                   </Button>
                 )}
               </Box>
+              {/* Score comparison */}
+              {(optimizedScore || rescoring) && (
+                <Box sx={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  gap: 1.5, mb: 2, py: 1.5, px: 2,
+                  borderRadius: "12px", bgcolor: "#f0fdf4", border: "1px solid #bbf7d0",
+                }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography sx={{ fontSize: 11, color: "#999", mb: 0.25 }}>当前</Typography>
+                    <Typography sx={{ fontSize: 22, fontWeight: 800, color: "#666" }}>
+                      {Math.round(report.overall_score)}
+                    </Typography>
+                  </Box>
+                  <ArrowForwardIcon sx={{ fontSize: 18, color: "#16a34a" }} />
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography sx={{ fontSize: 11, color: "#16a34a", mb: 0.25, fontWeight: 600 }}>优化后预估</Typography>
+                    {rescoring ? (
+                      <Skeleton variant="text" width={40} height={32} sx={{ mx: "auto" }} />
+                    ) : optimizedScore ? (
+                      <Typography sx={{ fontSize: 22, fontWeight: 800, color: "#16a34a" }}>
+                        {Math.round(optimizedScore.total_score)}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                  {optimizedScore && (
+                    <Box sx={{ px: 1, py: 0.4, borderRadius: "8px", bgcolor: "#dcfce7" }}>
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#16a34a" }}>
+                        +{Math.round(optimizedScore.total_score - report.overall_score)}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              )}
+
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 1.5 }}>
                 {report.optimized_title && (
                   <Box sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa", border: "1px solid #f0f0f0", display: "flex", justifyContent: "space-between", gap: 1 }}>
@@ -222,7 +300,10 @@ export default function Report() {
             </Box>
           )}
 
+          </motion.div>
+
           {/* Row 4: Agent debate + Comments */}
+          <motion.div {...sectionAnim(4)}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "3fr 2fr" }, gap: sectionGap, mb: sectionGap }}>
             <Box sx={card}>
               <Typography sx={{ fontWeight: 600, fontSize: 15, color: "#262626", mb: 2 }}>Agent 诊断详情</Typography>
@@ -239,16 +320,22 @@ export default function Report() {
             </Box>
           </Box>
 
+          </motion.div>
+
           {/* Row 5: Export */}
+          <motion.div {...sectionAnim(5)}>
           <Box sx={card}>
             <DiagnoseCard report={report} title={params.title} />
           </Box>
 
+          </motion.div>
+
+          <motion.div {...sectionAnim(6)}>
           <Typography sx={{ textAlign: "center", fontSize: 12, color: "#ccc", mt: 3 }}>
             本报告由 AI 多 Agent 协作生成，仅供参考
           </Typography>
+          </motion.div>
         </Box>
-      </motion.div>
     </Box>
   );
 }
