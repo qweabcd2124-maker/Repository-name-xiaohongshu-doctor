@@ -46,7 +46,6 @@ export default function Home() {
 
   const [aiRecogs, setAiRecogs] = useState<Record<string, QuickRecognizeResult>>({});
   const [aiLoading, setAiLoading] = useState<Record<string, boolean>>({});
-  const [aiSuggestion, setAiSuggestion] = useState("");
   const [uploadingPulse, setUploadingPulse] = useState(false);
   const [analyzingPulse, setAnalyzingPulse] = useState(false);
 
@@ -270,28 +269,6 @@ export default function Home() {
   }, [pendingRecognition, imageFileKeys.size]);
 
   useEffect(() => {
-    const recognizedSlots = new Set(
-      successRecogEntries
-        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type.toLowerCase() : ""))
-        .filter(Boolean),
-    );
-    const hasAny = files.length > 0;
-    const hasBody = Boolean(content.trim() || aggregated.bestContent);
-    const hasDetail = recognizedSlots.has("content");
-    const hasCover = recognizedSlots.has("cover");
-    const hasProfile = recognizedSlots.has("profile");
-    const hasComments = recognizedSlots.has("comments");
-
-    if (!hasAny) setAiSuggestion("");
-    else if (!hasDetail) setAiSuggestion("未检测到笔记详情页截图，请上传包含标题+正文/标签的详情页，AI 才会提取笔记内容。");
-    else if (!hasBody) setAiSuggestion("已检测到详情页，但正文仍不清晰，建议补充一张更清晰的详情截图。");
-    else if (!hasCover) setAiSuggestion("可补充封面截图，提升视觉内容判断。");
-    else if (!hasProfile) setAiSuggestion("可补充主页截图，帮助判断账号定位。");
-    else if (!hasComments) setAiSuggestion("可补充评论区截图，分析互动质量。");
-    else setAiSuggestion("信息较完整，可以直接开始诊断。");
-  }, [files.length, successRecogEntries, content, aggregated.bestContent]);
-
-  useEffect(() => {
     if (files.length === 0) {
       setAiRecogs({});
       setAiLoading({});
@@ -355,6 +332,21 @@ export default function Home() {
   );
   const hasDetailScreenshot = recognizedSlots.has("content");
   const canSubmit = files.length > 0 && title.trim().length > 0 && !lockInputs && !isFormBlocked && hasDetailScreenshot;
+  const aiSuggestion = useMemo(() => {
+    if (files.length === 0) return "";
+    if (!allRecognitionDone) return "";
+    const hasBody = Boolean(content.trim() || aggregated.bestContent);
+    const hasCover = recognizedSlots.has("cover");
+    const hasProfile = recognizedSlots.has("profile");
+    const hasComments = recognizedSlots.has("comments");
+
+    if (!hasDetailScreenshot) return "未检测到笔记详情页截图，请上传包含标题+正文/标签的详情页，AI 才会提取笔记内容。";
+    if (!hasBody) return "已检测到详情页，但正文仍不清晰，建议补充一张更清晰的详情截图。";
+    if (!hasCover) return "可补充封面截图，提升视觉内容判断。";
+    if (!hasProfile) return "可补充主页截图，帮助判断账号定位。";
+    if (!hasComments) return "可补充评论区截图，分析互动质量。";
+    return "信息较完整，可以直接开始诊断。";
+  }, [files.length, allRecognitionDone, content, aggregated.bestContent, recognizedSlots, hasDetailScreenshot]);
   const slotLabelMap: Record<string, string> = {
     content: "详情",
     cover: "封面",
@@ -468,11 +460,14 @@ export default function Home() {
             ))}
           </Box>
         )}
-        {aiSuggestion && !allFailed && (
+        {aiSuggestion && !allFailed && aiSuggestion.includes("未检测到笔记详情页截图") && (
+          <Alert severity="error" sx={{ mt: 0.5, fontWeight: 700, "& .MuiAlert-message": { fontSize: { xs: 13, md: 12 }, lineHeight: 1.6 } }}>
+            {aiSuggestion}
+          </Alert>
+        )}
+        {aiSuggestion && !allFailed && !aiSuggestion.includes("未检测到笔记详情页截图") && (
           <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#4b5563", lineHeight: 1.55 }}>
-            <Box component="span" sx={{ mr: 0.5, color: aiSuggestion.includes("未检测到") ? "#b45309" : "#059669" }} aria-hidden>
-              {aiSuggestion.includes("未检测到") ? "!" : "✓"}
-            </Box>
+            <Box component="span" sx={{ mr: 0.5, color: "#059669" }} aria-hidden>✓</Box>
             {aiSuggestion}
           </Typography>
         )}
