@@ -43,7 +43,7 @@ export default function ScoreCard({ score, grade, title }: Props) {
           </Typography>
         </Box>
         <Box sx={{ textAlign: "right", ml: 2 }}>
-          <Typography variant="h2" fontWeight={800} lineHeight={1}>
+          <Typography variant="h2" sx={{ fontWeight: 800, lineHeight: 1 }}>
             {Math.round(score)}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8 }}>

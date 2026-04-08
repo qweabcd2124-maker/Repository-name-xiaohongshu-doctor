@@ -40,7 +40,7 @@ export default function SimulatedComments({ comments }: Props) {
             bgcolor: SENTIMENT_COLORS[c.sentiment] || SENTIMENT_COLORS.neutral,
           }}
         >
-          <Typography fontSize={28} lineHeight={1}>
+          <Typography sx={{ fontSize: 28, lineHeight: 1 }}>
             {c.avatar_emoji}
           </Typography>
           <Box sx={{ minWidth: 0 }}>
