@@ -27,7 +27,7 @@ const CAT_MAP: Record<string, string> = {
   "健身": "fitness", "运动": "fitness",
 };
 
-const WIZARD_LABELS = ["上传素材", "完善信息并开始"];
+const WIZARD_LABELS = ["上传核心内容", "确认并完善信息"];
 
 /**
  * 首页：移动端为两步向导（上传后自动进入填写页，可返回）；桌面端为双栏卡片 + 固定视口，表单区内部滚动。
@@ -268,15 +268,28 @@ export default function Home() {
   }, [pendingRecognition, imageFileKeys.size]);
 
   useEffect(() => {
-    const imgCount = files.filter((f) => f.type.startsWith("image/")).length;
-    const hasVideo = files.some((f) => f.type.startsWith("video/"));
-    if (files.length === 0) setAiSuggestion("");
-    else if (imgCount === 1 && !hasVideo) setAiSuggestion("建议再上传正文截图或评论区截图，让诊断更全面");
-    else if (imgCount === 2) setAiSuggestion("不错！可以继续补充主页截图和评论区截图");
-    else if (imgCount >= 3) setAiSuggestion("图片充足，可以直接开始诊断了");
-    else if (hasVideo && imgCount === 0) setAiSuggestion("建议再补一张封面截图，提升视觉维度分析效果");
-    else setAiSuggestion("");
-  }, [files]);
+    const recognizedSlots = new Set(
+      successResults
+        .map((r) => (typeof r.slot_type === "string" ? r.slot_type : ""))
+        .filter(Boolean),
+    );
+    const hasCoreContent = files.length > 0;
+    const hasCover = hasCoreContent && (
+      recognizedSlots.has("cover")
+      || files.some((f) => f.type.startsWith("video/"))
+      || files.some((f) => f.type.startsWith("image/"))
+    );
+    const hasBody = Boolean(content.trim() || aggregated.bestContent);
+    const hasProfile = recognizedSlots.has("profile");
+    const hasComments = recognizedSlots.has("comments");
+
+    if (!hasCoreContent) setAiSuggestion("");
+    else if (!hasCover) setAiSuggestion("第 2 步建议补一张封面截图（可选），可提升封面维度判断。");
+    else if (!hasBody) setAiSuggestion("第 3 步正文会由 AI 自动提取，识别后你只需确认或微调。");
+    else if (!hasProfile) setAiSuggestion("第 4 步可补充主页截图，帮助判断账号定位和权重。");
+    else if (!hasComments) setAiSuggestion("第 5 步可补充评论区截图，分析互动质量与争议点。");
+    else setAiSuggestion("核心信息已较完整，可以直接开始诊断。");
+  }, [files, successResults, content, aggregated.bestContent]);
 
   useEffect(() => {
     if (files.length === 0) {
@@ -355,9 +368,31 @@ export default function Home() {
     });
   };
 
-  const imageCount = files.filter((f) => f.type.startsWith("image/")).length;
-  const guideSteps = ["上传封面", "补充正文", "补充主页", "补充评论区"];
-  const currentGuideIndex = Math.min(imageCount, guideSteps.length - 1);
+  const recognizedSlots = useMemo(
+    () => new Set(
+      successResults
+        .map((r) => (typeof r.slot_type === "string" ? r.slot_type : ""))
+        .filter(Boolean),
+    ),
+    [successResults],
+  );
+  const guideSteps = ["上传核心内容", "上传封面（可选）", "确认/补充正文", "补充主页", "补充评论区"];
+  const guideDone = useMemo(() => {
+    const hasCore = files.length > 0;
+    const hasCover = hasCore && (
+      recognizedSlots.has("cover")
+      || files.some((f) => f.type.startsWith("video/"))
+      || files.some((f) => f.type.startsWith("image/"))
+    );
+    const hasBody = Boolean(content.trim() || aggregated.bestContent);
+    const hasProfile = recognizedSlots.has("profile");
+    const hasComments = recognizedSlots.has("comments");
+    return [hasCore, hasCover, hasBody, hasProfile, hasComments];
+  }, [files, recognizedSlots, content, aggregated.bestContent]);
+  const currentGuideIndex = useMemo(() => {
+    const nextPending = guideDone.findIndex((x) => !x);
+    return nextPending === -1 ? guideSteps.length - 1 : nextPending;
+  }, [guideDone, guideSteps.length]);
 
   const handleWizardBack = () => {
     setWizardStep(0);
@@ -392,7 +427,7 @@ export default function Home() {
           mb: { xs: 1, md: 0.85 },
         }}
       >
-        引导 · 按截图类型补齐素材，识别更准确
+        引导 · 先传核心内容，再按需补充截图，诊断更完整
       </Typography>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
         {guideSteps.map((step, idx) => (
@@ -401,13 +436,21 @@ export default function Home() {
             size="small"
             label={step}
             sx={{
-              background: idx <= currentGuideIndex ? "linear-gradient(135deg, #ff3d5c, #e61e3d)" : "rgba(255,255,255,0.92)",
-              color: idx <= currentGuideIndex ? "#fff" : "#6b6b6b",
-              border: idx <= currentGuideIndex ? "none" : "1px solid rgba(0,0,0,0.06)",
+              background: guideDone[idx]
+                ? "linear-gradient(135deg, #ff3d5c, #e61e3d)"
+                : idx === currentGuideIndex
+                  ? "rgba(255, 236, 220, 0.95)"
+                  : "rgba(255,255,255,0.92)",
+              color: guideDone[idx] ? "#fff" : idx === currentGuideIndex ? "#b45309" : "#6b6b6b",
+              border: guideDone[idx] ? "none" : idx === currentGuideIndex ? "1px solid rgba(180, 83, 9, 0.35)" : "1px solid rgba(0,0,0,0.06)",
               fontSize: { xs: 11, md: 10 },
               height: { md: 24 },
               fontWeight: idx === currentGuideIndex ? 700 : 500,
-              boxShadow: idx <= currentGuideIndex ? "0 2px 8px rgba(255, 36, 66, 0.25)" : "0 1px 2px rgba(0,0,0,0.04)",
+              boxShadow: guideDone[idx]
+                ? "0 2px 8px rgba(255, 36, 66, 0.25)"
+                : idx === currentGuideIndex
+                  ? "0 1px 6px rgba(180, 83, 9, 0.18)"
+                  : "0 1px 2px rgba(0,0,0,0.04)",
               transition: "all 0.2s ease",
             }}
           />
@@ -502,7 +545,7 @@ export default function Home() {
           disabled={lockInputs}
           value={title}
           onChange={(e) => { setTitle(e.target.value); setUserEdited((p) => ({ ...p, title: true })); }}
-          placeholder="上传图片后 AI 自动识别，也可手动输入"
+          placeholder="上传核心素材后 AI 自动识别，也可手动输入"
           slotProps={{ htmlInput: { maxLength: 100 } }}
           helperText={lockInputs ? "AI 处理中，识别完成后会自动回填标题" : autoFilled.title ? "✅ AI 已自动识别填充，可自行修改" : `${title.length}/100`}
         />
@@ -522,7 +565,7 @@ export default function Home() {
           disabled={lockInputs}
           value={content}
           onChange={(e) => { setContent(e.target.value); setUserEdited((p) => ({ ...p, content: true })); }}
-          placeholder="上传图片后 AI 自动提取正文，也可手动输入"
+          placeholder="上传核心素材后 AI 自动提取正文，也可手动补充"
           helperText={lockInputs ? "AI 处理中，识别完成后会自动回填正文" : autoFilled.content ? "✅ AI 已自动提取正文，可自行修改" : undefined}
         />
         {showWarnings && warnings.content && !content.trim() && !userEdited.content && (
@@ -656,7 +699,7 @@ export default function Home() {
               薯医 NoteRx
             </Typography>
             <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", lineHeight: 1.35, opacity: 0.92 }}>
-              上传素材 → AI 预填 → 一键诊断
+              核心素材上传 → AI 识别预填 → 一键诊断
             </Typography>
           </Box>
         </Box>
@@ -857,7 +900,7 @@ export default function Home() {
                 {guideCard}
                 <UploadZone files={files} onFilesChange={handleFilesChange} maxFiles={9} />
                 <Typography sx={{ fontSize: 11, color: "#999", textAlign: "center" }}>
-                  {files.length === 0 ? "请先上传至少一张图或一个视频" : wizardHold ? "可点下方按钮进入填写信息" : "即将自动进入「完善信息」…"}
+                  {files.length === 0 ? "请先上传核心内容（视频或照片）" : wizardHold ? "可点下方按钮进入填写信息" : "即将自动进入「确认并完善信息」…"}
                 </Typography>
                 {wizardHold && files.length > 0 && (
                   <Button variant="outlined" fullWidth onClick={handleWizardContinue} sx={{ borderRadius: "14px", py: 1.1, fontWeight: 600 }}>

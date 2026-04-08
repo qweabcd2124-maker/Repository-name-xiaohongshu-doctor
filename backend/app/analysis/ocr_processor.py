@@ -1,21 +1,22 @@
-"""
+﻿"""
 OCR 处理模块
-使用 mimo-v2-omni 多模态模型提取截图中的笔记内容。
+使用 mimo-v2-omni 多模态模型提取截图中的笔记信息。
 """
+
 from __future__ import annotations
 
 import base64
 import json
-import os
 import logging
-
-logger = logging.getLogger("noterx.ocr")
+import os
 
 from app.agents.base_agent import _is_mimo_openai_compat
 
+logger = logging.getLogger("noterx.ocr")
+
 
 class OCRProcessor:
-    """从图片中提取文字内容"""
+    """从图片中提取文本内容。"""
 
     async def extract_text(self, image_bytes: bytes, client=None) -> dict:
         if client is None:
@@ -26,7 +27,7 @@ class OCRProcessor:
 
         try:
             msg_body: list | str = [
-                {"type": "text", "text": "请提取这张小红书笔记截图中的标题、正文和标签。"},
+                {"type": "text", "text": "请基于截图语义提取标题、正文要点和标签；无需逐字 OCR 整屏。"},
                 {
                     "type": "image_url",
                     "image_url": {"url": f"data:image/png;base64,{b64_image}"},
@@ -38,9 +39,9 @@ class OCRProcessor:
                     {
                         "role": "system",
                         "content": (
-                            "你是一个小红书笔记内容提取器。"
-                            "请从截图中精确提取笔记的标题、正文和标签。"
-                            '以JSON格式输出：{"title": "...", "content": "...", "tags": [...]}'
+                            "你是一个小红书截图信息提取助手。"
+                            "请优先做内容理解，再提取关键字段；看不清就留空，不要臆造。"
+                            '仅输出 JSON：{"title": "...", "content": "...", "tags": [...]}'
                         ),
                     },
                     {"role": "user", "content": msg_body},
@@ -54,7 +55,7 @@ class OCRProcessor:
                 kwargs["max_tokens"] = 1500
 
             response = await client.chat.completions.create(**kwargs)
-            raw = response.choices[0].message.content
+            raw = response.choices[0].message.content or ""
             clean = raw.strip()
             if clean.startswith("```"):
                 clean = clean.split("\n", 1)[1].rsplit("```", 1)[0]
