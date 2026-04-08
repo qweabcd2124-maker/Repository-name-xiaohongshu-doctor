@@ -110,11 +110,7 @@ const FUN_FACTS = [
   { q: "科技品类头部笔记是均值的多少倍？", a: "24.4 倍！赢家通吃最严重的品类" },
 ];
 
-const CATEGORY_LABEL: Record<string, string> = {
-  food: "美食", fashion: "穿搭", tech: "科技",
-  travel: "旅行", beauty: "美妆", fitness: "健身",
-  lifestyle: "生活", home: "家居",
-};
+/* (CATEGORY_LABEL removed — category shown via preScoreData.category_cn) */
 
 
 /* ── Agent status config ── */
