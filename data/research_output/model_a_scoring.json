@@ -1,0 +1,194 @@
+{
+  "food": {
+    "weights": {
+      "title_quality": 0.398,
+      "content_quality": 0.202,
+      "visual_quality": 0.094,
+      "tag_strategy": 0.043,
+      "engagement_potential": 0.263
+    },
+    "scoring_params": {
+      "title_length": {
+        "optimal": {
+          "min": 12.0,
+          "max": 20.0
+        },
+        "viral_avg": 18.6
+      },
+      "tag_count": {
+        "optimal": {
+          "min": 4,
+          "max": 8,
+          "best": 6
+        }
+      },
+      "content_length": {
+        "optimal": {
+          "min": 115.5,
+          "max": 311.75
+        }
+      },
+      "image_count": {
+        "optimal": {
+          "min": 0.0,
+          "max": 9.0
+        }
+      }
+    },
+    "baseline": {
+      "avg_engagement": 46686.14,
+      "median_engagement": 17673.0,
+      "viral_threshold": 139935.7,
+      "viral_rate": 10.0,
+      "sample_size": 100
+    },
+    "regression_r_squared": 0.1355,
+    "title_patterns": [],
+    "content_structure": [],
+    "top_tags": []
+  },
+  "fashion": {
+    "weights": {
+      "title_quality": 0.292,
+      "content_quality": 0.219,
+      "visual_quality": 0.21,
+      "tag_strategy": 0.055,
+      "engagement_potential": 0.224
+    },
+    "scoring_params": {
+      "title_length": {
+        "optimal": {
+          "min": 11.0,
+          "max": 20.0
+        },
+        "viral_avg": 15.65
+      },
+      "tag_count": {
+        "optimal": {
+          "min": 4,
+          "max": 8,
+          "best": 6
+        }
+      },
+      "content_length": {
+        "optimal": {
+          "min": 94.75,
+          "max": 237.75
+        }
+      },
+      "image_count": {
+        "optimal": {
+          "min": 1.0,
+          "max": 9.0
+        }
+      }
+    },
+    "baseline": {
+      "avg_engagement": 7788.16,
+      "median_engagement": 2037.0,
+      "viral_threshold": 20564.6,
+      "viral_rate": 10.0,
+      "sample_size": 200
+    },
+    "regression_r_squared": 0.0211,
+    "title_patterns": [],
+    "content_structure": [],
+    "top_tags": []
+  },
+  "tech": {
+    "weights": {
+      "title_quality": 0.5,
+      "content_quality": 0.041,
+      "visual_quality": 0.08,
+      "tag_strategy": 0.145,
+      "engagement_potential": 0.234
+    },
+    "scoring_params": {
+      "title_length": {
+        "optimal": {
+          "min": 7.0,
+          "max": 19.0
+        },
+        "viral_avg": 14.64
+      },
+      "tag_count": {
+        "optimal": {
+          "min": 4,
+          "max": 8,
+          "best": 6
+        }
+      },
+      "content_length": {
+        "optimal": {
+          "min": 72.0,
+          "max": 446.0
+        }
+      },
+      "image_count": {
+        "optimal": {
+          "min": 1.0,
+          "max": 4.0
+        }
+      }
+    },
+    "baseline": {
+      "avg_engagement": 828.87,
+      "median_engagement": 44.0,
+      "viral_threshold": 1515.0,
+      "viral_rate": 10.9,
+      "sample_size": 101
+    },
+    "regression_r_squared": 0.1411,
+    "title_patterns": [],
+    "content_structure": [],
+    "top_tags": []
+  },
+  "travel": {
+    "weights": {
+      "title_quality": 0.288,
+      "content_quality": 0.069,
+      "visual_quality": 0.125,
+      "tag_strategy": 0.349,
+      "engagement_potential": 0.169
+    },
+    "scoring_params": {
+      "title_length": {
+        "optimal": {
+          "min": 10.0,
+          "max": 18.0
+        },
+        "viral_avg": 13.9
+      },
+      "tag_count": {
+        "optimal": {
+          "min": 4,
+          "max": 8,
+          "best": 6
+        }
+      },
+      "content_length": {
+        "optimal": {
+          "min": 106.75,
+          "max": 505.0
+        }
+      },
+      "image_count": {
+        "optimal": {
+          "min": 2.0,
+          "max": 12.0
+        }
+      }
+    },
+    "baseline": {
+      "avg_engagement": 17236.18,
+      "median_engagement": 4393.0,
+      "viral_threshold": 40026.3,
+      "viral_rate": 10.0,
+      "sample_size": 100
+    },
+    "regression_r_squared": 0.1077,
+    "title_patterns": [],
+    "content_structure": [],
+    "top_tags": []
+  }
+}

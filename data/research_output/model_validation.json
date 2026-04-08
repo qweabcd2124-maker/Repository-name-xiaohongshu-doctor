@@ -1,0 +1,47 @@
+{
+  "food": {
+    "sample_size": 100,
+    "score_engagement_correlation": 0.051,
+    "p_value": 0.614591,
+    "significant": false,
+    "viral_avg_score": 76.3,
+    "normal_avg_score": 73.7,
+    "score_gap": 2.5,
+    "classification_accuracy": 52.0
+  },
+  "fashion": {
+    "sample_size": 200,
+    "score_engagement_correlation": -0.0904,
+    "p_value": 0.202995,
+    "significant": false,
+    "viral_avg_score": 71.0,
+    "normal_avg_score": 72.0,
+    "score_gap": -1.0,
+    "classification_accuracy": 51.0
+  },
+  "tech": {
+    "sample_size": 101,
+    "score_engagement_correlation": 0.1793,
+    "p_value": 0.072746,
+    "significant": false,
+    "viral_avg_score": 78.2,
+    "normal_avg_score": 72.6,
+    "score_gap": 5.6,
+    "classification_accuracy": 51.5
+  },
+  "travel": {
+    "sample_size": 100,
+    "score_engagement_correlation": -0.0455,
+    "p_value": 0.652918,
+    "significant": false,
+    "viral_avg_score": 69.9,
+    "normal_avg_score": 70.0,
+    "score_gap": -0.1,
+    "classification_accuracy": 48.0
+  },
+  "_overall": {
+    "total_samples": 501,
+    "correlation": -0.0364,
+    "p_value": 0.415809
+  }
+}
