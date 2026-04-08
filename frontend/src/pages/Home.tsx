@@ -128,7 +128,7 @@ export default function Home() {
     let bestSummary = "";
 
     for (const [, r] of successRecogEntries) {
-      if (r.slot_type === "content") {
+      if ((r.slot_type || "").toLowerCase() === "content") {
         if (!bestTitle && r.title?.trim()) bestTitle = r.title.trim();
         if (!bestContent && r.content_text?.trim()) bestContent = r.content_text.trim();
       }
@@ -272,7 +272,7 @@ export default function Home() {
   useEffect(() => {
     const recognizedSlots = new Set(
       successRecogEntries
-        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type : ""))
+        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type.toLowerCase() : ""))
         .filter(Boolean),
     );
     const hasAny = files.length > 0;
@@ -348,7 +348,7 @@ export default function Home() {
   const recognizedSlots = useMemo(
     () => new Set(
       successRecogEntries
-        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type : ""))
+        .map(([, r]) => (typeof r.slot_type === "string" ? r.slot_type.toLowerCase() : ""))
         .filter(Boolean),
     ),
     [successRecogEntries],
@@ -470,7 +470,9 @@ export default function Home() {
         )}
         {aiSuggestion && !allFailed && (
           <Typography sx={{ fontSize: { xs: 12, md: 11 }, color: "#4b5563", lineHeight: 1.55 }}>
-            <Box component="span" sx={{ mr: 0.5 }} aria-hidden>✓</Box>
+            <Box component="span" sx={{ mr: 0.5, color: aiSuggestion.includes("未检测到") ? "#b45309" : "#059669" }} aria-hidden>
+              {aiSuggestion.includes("未检测到") ? "!" : "✓"}
+            </Box>
             {aiSuggestion}
           </Typography>
         )}

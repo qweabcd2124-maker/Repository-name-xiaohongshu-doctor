@@ -87,6 +87,30 @@ def _normalize_tags(tags: list[object]) -> str:
     return " ".join(cleaned)
 
 
+def _normalize_slot_type(raw: object) -> str:
+    """标准化模型返回的 slot_type，降低大小写/同义词导致的误判。"""
+    text = str(raw or "").strip().lower()
+    alias_map = {
+        "cover": "cover",
+        "封面": "cover",
+        "content": "content",
+        "detail": "content",
+        "details": "content",
+        "正文": "content",
+        "详情": "content",
+        "profile": "profile",
+        "主页": "profile",
+        "home": "profile",
+        "comments": "comments",
+        "comment": "comments",
+        "评论": "comments",
+        "评论区": "comments",
+        "other": "other",
+        "unknown": "other",
+    }
+    return alias_map.get(text, "other")
+
+
 async def _vision_call(client, prompt: str, image_bytes: bytes) -> dict:
     """调用多模态模型进行图片分析。"""
     b64 = base64.b64encode(image_bytes).decode("utf-8")
@@ -146,7 +170,8 @@ async def quick_recognize(
 
     try:
         result = await _vision_call(client, prompt, image_bytes)
-        slot_type = str(result.get("slot_type", "")).strip().lower()
+        slot_type = _normalize_slot_type(result.get("slot_type", ""))
+        result["slot_type"] = slot_type
         if slot_type != "content":
             result["title"] = ""
             result["content_text"] = ""
