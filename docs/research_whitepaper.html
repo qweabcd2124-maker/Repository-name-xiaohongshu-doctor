@@ -108,15 +108,8 @@ footer .motto{color:rgba(255,255,255,0.6);font-size:0.9rem;margin:0.8rem 0}
 .float-cta .btn-red{font-size:0.85rem;padding:0.6rem 1.4rem;box-shadow:0 6px 24px rgba(255,36,66,0.35)}
 
 /* ━━ Launch overlay ━━ */
-#launch-overlay{position:fixed;inset:0;z-index:99999;pointer-events:none;overflow:hidden}
-#launch-overlay .lo-bg{position:absolute;width:80px;height:80px;border-radius:50%;background:var(--red);transform:translate(-50%,-50%) scale(0);will-change:transform}
-#launch-overlay.go .lo-bg{transition:transform 0.55s cubic-bezier(0.4,0,0,1)}
-#launch-overlay .lo-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s 0.35s}
-#launch-overlay.go .lo-c{opacity:1}
-#launch-overlay .lo-c h3{font-size:1.8rem;font-weight:900;color:#fff}
-#launch-overlay .lo-c p{color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:0.3rem}
-#launch-overlay .lo-spin{width:24px;height:24px;border:3px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:sp 0.6s linear infinite;margin-top:1.2rem}
-@keyframes sp{to{transform:rotate(360deg)}}
+#launch-overlay{position:fixed;inset:0;z-index:99999;pointer-events:none;background:var(--red);opacity:0;transition:opacity 0.35s ease;display:flex;align-items:center;justify-content:center}
+#launch-overlay.go{opacity:1;pointer-events:all}
 
 /* ━━ Scroll reveal ━━ */
 .rv{opacity:0;transform:translateY(24px);transition:opacity 0.6s,transform 0.6s}.rv.vis{opacity:1;transform:none}
@@ -466,26 +459,14 @@ footer .motto{color:rgba(255,255,255,0.6);font-size:0.9rem;margin:0.8rem 0}
 </footer>
 
 <!-- ━━ OVERLAY ━━ -->
-<div id="launch-overlay">
-  <div class="lo-bg"></div>
-  <div class="lo-c"><h3>薯医</h3><p>正在启动 AI 诊断系统...</p><div class="lo-spin"></div></div>
-</div>
+<div id="launch-overlay"></div>
 
 <script>
 // Launch transition
 function go(e){
   e.preventDefault();
-  var o=document.getElementById('launch-overlay'),bg=o.querySelector('.lo-bg'),r=e.currentTarget.getBoundingClientRect();
-  var cx=r.left+r.width/2,cy=r.top+r.height/2;
-  bg.style.left=cx+'px';bg.style.top=cy+'px';
-  var mx=Math.max(Math.hypot(cx,cy),Math.hypot(window.innerWidth-cx,cy),Math.hypot(cx,window.innerHeight-cy),Math.hypot(window.innerWidth-cx,window.innerHeight-cy));
-  var sc=mx*2.2/40;
-  bg.style.transition='none';bg.style.transform='translate(-50%,-50%) scale(0)';
-  bg.offsetHeight;
-  bg.style.transition='transform 0.55s cubic-bezier(0.4,0,0,1)';
-  bg.style.transform='translate(-50%,-50%) scale('+sc+')';
-  o.classList.add('go');
-  setTimeout(function(){window.location.href='/app'},900);
+  document.getElementById('launch-overlay').classList.add('go');
+  setTimeout(function(){window.location.href='/app'},400);
   return false;
 }
 
