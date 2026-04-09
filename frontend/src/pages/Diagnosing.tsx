@@ -175,6 +175,7 @@ export default function Diagnosing() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [preScoreData, setPreScoreData] = useState<PreScoreResult | null>(null);
   const [streamMsg, setStreamMsg] = useState<string>("");
+  const [debateMsgs, setDebateMsgs] = useState<string[]>([]);
   const apiDone = useRef(false);
   const hasRealtimeProgress = useRef(false);
   const resultRef = useRef<{ report: unknown; isFallback: boolean } | null>(null);
@@ -220,6 +221,10 @@ export default function Diagnosing() {
               const mapped = EVENT_STEP_MAP[event.data.step];
               if (mapped !== undefined) {
                 setStep((prev) => Math.max(prev, mapped));
+              }
+              // Collect debate snippets for live display
+              if (event.data.step?.startsWith("debate_agent_")) {
+                setDebateMsgs((prev) => [...prev, event.data.message]);
               }
             } else if (event.type === "result") {
               resultRef.current = { report: event.data, isFallback: false };
@@ -512,7 +517,41 @@ export default function Diagnosing() {
             </Box>
 
             {/* ── Divider ── */}
-            <Box sx={{ height: 1, bgcolor: "#f5f5f5" }} />
+            <Box sx={{ height: 1, bgcolor: "#f0f0f0" }} />
+
+            {/* Live debate feed */}
+            <AnimatePresence>
+              {debateMsgs.length > 0 && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}>
+                  <Box>
+                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#ff2442", mb: 1, letterSpacing: "0.04em" }}>
+                      专家辩论实况
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                      {debateMsgs.map((msg, i) => {
+                        const colors = ["#ff2442", "#8b5cf6", "#f59e0b", "#3b82f6"];
+                        const bgColors = ["#fff5f6", "#faf5ff", "#fffbeb", "#eff6ff"];
+                        return (
+                          <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: i * 0.05 }}>
+                            <Box sx={{
+                              px: 1.25, py: 0.75, borderRadius: "8px",
+                              bgcolor: bgColors[i % 4],
+                              borderLeft: `2px solid ${colors[i % 4]}`,
+                            }}>
+                              <Typography sx={{ fontSize: 12, color: "#444", lineHeight: 1.5 }}>
+                                {msg}
+                              </Typography>
+                            </Box>
+                          </motion.div>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Tips */}
             <Box>

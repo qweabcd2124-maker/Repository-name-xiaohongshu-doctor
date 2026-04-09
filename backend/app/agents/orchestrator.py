@@ -399,11 +399,14 @@ class Orchestrator:
                     debate_tokens += meta.get("total_tokens", 0)
                 result["agent_name"] = agents[idx].agent_name
                 debate_records.append(result)
-                # Emit progress
+                # Emit progress with debate preview text
                 name = agent_names[idx] if idx < len(agent_names) else agents[idx].agent_name
+                # Pick the most interesting snippet: first disagreement > addition > agreement
+                snippets = (result.get("disagreements") or []) + (result.get("additions") or []) + (result.get("agreements") or [])
+                preview = snippets[0][:80] if snippets else f"{name}完成发言"
                 if progress_cb:
                     try:
-                        ret = progress_cb(f"debate_agent_{idx}", f"{name}辩论完成")
+                        ret = progress_cb(f"debate_agent_{idx}", f"{name}：{preview}")
                         if asyncio.iscoroutine(ret):
                             await ret
                     except Exception:
