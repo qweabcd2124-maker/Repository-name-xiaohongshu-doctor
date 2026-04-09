@@ -203,14 +203,6 @@ export default function Home() {
 
   const allFailed = allRecognitionDone && successResults.length === 0 && allResults.length > 0;
 
-  /** 全部失败时展示首条错误，便于区分「未连上后端」与「模型未识别出内容」 */
-  const firstRecognitionError = useMemo(() => {
-    for (const r of allResults) {
-      if (!r.success && r.error?.trim()) return r.error.trim();
-    }
-    return "";
-  }, [allResults]);
-
   const showWarnings = allRecognitionDone && files.length > 0 && !allFailed;
   const warnings = useMemo(() => {
     if (!showWarnings) return { title: false, content: false, category: false };
