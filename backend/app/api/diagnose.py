@@ -439,6 +439,9 @@ async def diagnose_note(
     if not title.strip():
         raise HTTPException(400, "请输入标题，或上传可识别标题的图片/视频")
 
+    import time as _time
+    from app.api.usage_tracker import get_client_ip, log_usage
+    _t0 = _time.time()
     orchestrator = Orchestrator()
     report = await orchestrator.run(
         title=title,
@@ -447,6 +450,16 @@ async def diagnose_note(
         tags=tag_list,
         cover_image=image_bytes,
         video_analysis=video_analysis,
+    )
+    # Log usage
+    _tokens = report.get("model_a_pre_score", {}).get("total_tokens", 0)
+    log_usage(
+        ip=get_client_ip(request),
+        action="diagnose",
+        title=title[:100],
+        category=category,
+        total_tokens=_tokens,
+        duration_sec=_time.time() - _t0,
     )
     return report
 
