@@ -13,21 +13,38 @@ export default function DiagnoseCard({ report, title }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
+  const generateImage = async (): Promise<Blob | null> => {
+    if (!cardRef.current) return null;
+    const canvas = await html2canvas(cardRef.current, {
+      scale: 3,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+    });
+    return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
+  };
+
   const handleExport = async () => {
-    if (!cardRef.current) return;
     setExporting(true);
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
+      const blob = await generateImage();
+      if (!blob) return;
+
+      // Try native share first (mobile)
+      if (navigator.share && navigator.canShare?.({ files: [new File([blob], "card.png", { type: "image/png" })] })) {
+        const file = new File([blob], `薯医诊断-${title.slice(0, 10)}.png`, { type: "image/png" });
+        await navigator.share({ files: [file], title: "薯医诊断卡片" });
+        return;
+      }
+
+      // Fallback: download
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.download = `薯医诊断-${title.slice(0, 10)}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = url;
       link.click();
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("导出失败", err);
+      console.error("分享失败", err);
     } finally {
       setExporting(false);
     }
