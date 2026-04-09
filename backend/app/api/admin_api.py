@@ -191,8 +191,16 @@ function showDash(d){
   <table><tr><th>时间</th><th>IP</th><th>标题</th><th>品类</th><th>Token</th><th>耗时</th><th>状态</th></tr>
   ${usage.map(r=>`<tr><td style="font-size:10px;color:#999;white-space:nowrap">${(r.time||'').slice(5,16)}</td><td class="ip">${r.ip}</td><td>${r.title||'—'}</td><td>${r.category}</td><td>${r.tokens||0}</td><td>${r.duration||0}s</td><td><span class="tag ${r.status==='ok'?'ok':'err'}">${r.status}</span></td></tr>`).join('')}
   ${usage.length===0?'<tr><td colspan=7 style="color:#999;text-align:center">暂无记录</td></tr>':''}</table>
-  <button class="refresh" onclick="location.reload()">刷新</button></div>`;
+  <button class="refresh" onclick="doRefresh()">刷新</button>
+  <span id="autoLabel" style="font-size:11px;color:#999;margin-left:12px">每30秒自动刷新</span></div>`;
 }
+async function doRefresh(){
+  if(!token)return;
+  try{const r=await fetch('/admin/api/stats?password='+encodeURIComponent(token));
+  if(r.ok)showDash(await r.json());}catch(e){}
+}
+// Auto-refresh every 30s
+setInterval(()=>{if(token)doRefresh();},30000);
 showLogin();
 </script></body></html>"""
 
