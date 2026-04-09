@@ -22,11 +22,16 @@ _start_time = time.time()
 
 
 def _verify_password(password: str) -> bool:
-    return hashlib.sha512(password.encode()).hexdigest() == ADMIN_PASSWORD_SHA512
+    import hmac
+    return hmac.compare_digest(
+        hashlib.sha512(password.encode()).hexdigest(),
+        ADMIN_PASSWORD_SHA512,
+    )
 
 
 def _get_stats() -> dict:
     stats = {"timestamp": datetime.utcnow().isoformat(), "uptime_seconds": time.time() - _start_time}
+    conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
@@ -92,9 +97,11 @@ def _get_stats() -> dict:
             eng.setdefault(r[0], {})[r[1]] = r[2]
         stats["engagement_by_category"] = eng
 
-        conn.close()
     except Exception as e:
         stats["db_error"] = str(e)
+    finally:
+        if conn:
+            conn.close()
 
     try:
         import psutil
@@ -160,6 +167,7 @@ async function doLogin(){
   try{const r=await fetch('/admin/api/stats?password='+encodeURIComponent(pw));
   if(!r.ok){showLogin('密码错误');return;}token=pw;showDash(await r.json());}catch(e){showLogin('连接失败');}
 }
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function showDash(d){
   const hrs=d.hourly_24h||{};const maxH=Math.max(...Object.values(hrs),1);
   const topIps=d.top_ips||[];const maxIp=topIps[0]?.count||1;
@@ -186,10 +194,10 @@ function showDash(d){
   ${cats.map(([c,n])=>`<div class="bar"><div class="n">${c}</div><div class="t"><div class="f" style="width:${n/maxCat*100}%"></div></div><div class="num">${n}</div></div>`).join('')}
   <div class="s">Top IP</div>
   <table><tr><th>IP</th><th>次数</th><th>占比</th></tr>
-  ${topIps.map(r=>`<tr><td class="ip">${r.ip}</td><td>${r.count}</td><td>${d.total_requests?Math.round(r.count/d.total_requests*100):0}%</td></tr>`).join('')}</table>
+  ${topIps.map(r=>`<tr><td class="ip">${esc(r.ip)}</td><td>${r.count}</td><td>${d.total_requests?Math.round(r.count/d.total_requests*100):0}%</td></tr>`).join('')}</table>
   <div class="s">最近诊断</div>
   <table><tr><th>时间</th><th>IP</th><th>标题</th><th>品类</th><th>Token</th><th>耗时</th><th>状态</th></tr>
-  ${usage.map(r=>`<tr><td style="font-size:10px;color:#999;white-space:nowrap">${(r.time||'').slice(5,16)}</td><td class="ip">${r.ip}</td><td>${r.title||'—'}</td><td>${r.category}</td><td>${r.tokens||0}</td><td>${r.duration||0}s</td><td><span class="tag ${r.status==='ok'?'ok':'err'}">${r.status}</span></td></tr>`).join('')}
+  ${usage.map(r=>`<tr><td style="font-size:10px;color:#999;white-space:nowrap">${(r.time||'').slice(5,16)}</td><td class="ip">${esc(r.ip)}</td><td>${esc(r.title)||'—'}</td><td>${esc(r.category)}</td><td>${r.tokens||0}</td><td>${r.duration||0}s</td><td><span class="tag ${r.status==='ok'?'ok':'err'}">${esc(r.status)}</span></td></tr>`).join('')}
   ${usage.length===0?'<tr><td colspan=7 style="color:#999;text-align:center">暂无记录</td></tr>':''}</table>
   <button class="refresh" onclick="doRefresh()">刷新</button>
   <span id="autoLabel" style="font-size:11px;color:#999;margin-left:12px">每30秒自动刷新</span></div>`;
