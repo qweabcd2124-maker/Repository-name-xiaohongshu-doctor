@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Box, Typography, useTheme, useMediaQuery, Alert, Button } from "@mui/material";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+
 import { preScore, diagnoseStream, diagnoseNote, DIAGNOSE_CLIENT_MAX_MS } from "../utils/api";
 import type { PreScoreResult, StreamEvent } from "../utils/api";
 
