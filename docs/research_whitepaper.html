@@ -615,6 +615,12 @@ function go(e){
   return false;
 }
 
+// Reset launch overlay on page load (fixes browser back button showing stuck overlay)
+(function(){
+  var o=document.getElementById('launch-overlay');
+  if(o){o.style.transition='none';o.style.width='0';o.style.height='0';o.style.pointerEvents='none';o.classList.remove('go');}
+})();
+
 // Counter animation
 var counted=false;
 function counters(){

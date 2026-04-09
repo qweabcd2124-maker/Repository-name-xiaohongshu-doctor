@@ -521,7 +521,7 @@ export default function Home() {
   };
 
   const isReady = files.length > 0 && allRecognitionDone;
-  const [leaving, setLeaving] = useState(false);
+  /* leaving animation removed — breaks browser back button */
 
   return (
     <Box sx={{
@@ -563,7 +563,7 @@ export default function Home() {
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Button
-            onClick={() => { setLeaving(true); setTimeout(() => { window.location.href = "/"; }, 400); }}
+            onClick={() => { window.location.href = "/"; }}
             size="small"
             sx={{ color: "#999", fontSize: 12, fontWeight: 600, minWidth: "auto", px: 1, borderRadius: "8px",
               "&:hover": { color: "#ff2442", bgcolor: "#fff0f2" } }}
@@ -792,16 +792,7 @@ export default function Home() {
         )}
       </Box>
 
-      {/* Transition overlay */}
-      <AnimatePresence>
-        {leaving && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.35 }}
-            style={{ position: "fixed", inset: 0, zIndex: 100, background: "#ff2442",
-              display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Typography sx={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>薯医 NoteRx</Typography>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* transition overlay removed — caused browser back button to freeze */}
     </Box>
   );
 }
