@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Box, Typography, Stack } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -95,120 +95,43 @@ export default function AgentDebate({ opinions, summary, timeline }: Props) {
         );
       })}
 
-      {/* Debate timeline — auto-scroll carousel */}
+      {/* Debate timeline — simple list, no carousel, no auto-scroll */}
       {timeline && timeline.length > 0 && (
-        <DebateCarousel timeline={timeline} />
+        <Box>
+          <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#262626", mb: 1.5 }}>
+            辩论过程 · {timeline.length} 条
+          </Typography>
+          <Stack spacing={1}>
+            {timeline.map((entry, i) => {
+              const kind = KIND_STYLE[entry.kind] || KIND_STYLE.add;
+              const colors = AGENT_COLORS[entry.agent_name] || { accent: "#666", bg: "#f9f9f9", text: "#333" };
+              return (
+                <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                  <Box sx={{
+                    width: 24, height: 24, borderRadius: "6px", flexShrink: 0, mt: 0.25,
+                    bgcolor: colors.accent, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Typography sx={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>{agentInitial(entry.agent_name)}</Typography>
+                  </Box>
+                  <Box sx={{
+                    flex: 1, minWidth: 0, px: 1.5, py: 1,
+                    borderRadius: "4px 10px 10px 10px",
+                    bgcolor: kind.bg, border: `1px solid ${kind.color}15`,
+                  }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.25 }}>
+                      <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#262626" }}>{entry.agent_name}</Typography>
+                      <Box sx={{ fontSize: 9, fontWeight: 700, color: kind.color, bgcolor: `${kind.color}12`, borderRadius: "4px", px: 0.5, py: 0.1 }}>
+                        {kind.label}
+                      </Box>
+                    </Box>
+                    <Typography sx={{ fontSize: 12, color: "#555", lineHeight: 1.6 }}>{entry.text}</Typography>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Stack>
+        </Box>
       )}
     </Stack>
-  );
-}
-
-/** 辩论轮播组件：自动滚动展示所有辩论发言 */
-function DebateCarousel({ timeline }: { timeline: DebateEntry[] }) {
-  const [activeIdx, setActiveIdx] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-advance every 4 seconds
-  useEffect(() => {
-    if (timeline.length <= 1) return;
-    const timer = setInterval(() => {
-      setActiveIdx((prev) => (prev + 1) % timeline.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [timeline.length]);
-
-  // Scroll to active item
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const child = el.children[activeIdx] as HTMLElement;
-    if (child) {
-      child.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
-    }
-  }, [activeIdx]);
-
-  return (
-    <Box>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-        <Typography sx={{ fontWeight: 600, fontSize: 14, color: "#262626" }}>
-          辩论过程
-        </Typography>
-        <Typography sx={{ fontSize: 11, color: "#bbb" }}>
-          {activeIdx + 1} / {timeline.length}
-        </Typography>
-      </Box>
-
-      {/* Progress dots */}
-      <Box sx={{ display: "flex", gap: 0.5, mb: 1.5, justifyContent: "center" }}>
-        {timeline.map((_, i) => (
-          <Box key={i} onClick={() => setActiveIdx(i)} sx={{
-            width: i === activeIdx ? 16 : 6, height: 6,
-            borderRadius: 3, cursor: "pointer",
-            bgcolor: i === activeIdx ? "#ff2442" : "#e0e0e0",
-            transition: "all 0.3s ease",
-          }} />
-        ))}
-      </Box>
-
-      {/* Cards container */}
-      <Box ref={scrollRef} sx={{
-        display: "flex", gap: 1.5, overflowX: "auto",
-        scrollSnapType: "x mandatory",
-        "&::-webkit-scrollbar": { display: "none" },
-        scrollbarWidth: "none",
-        pb: 0.5,
-      }}>
-        {timeline.map((entry, i) => {
-          const kind = KIND_STYLE[entry.kind] || KIND_STYLE.add;
-          const colors = AGENT_COLORS[entry.agent_name] || { accent: "#666", bg: "#f9f9f9", text: "#333" };
-          const isActive = i === activeIdx;
-          return (
-            <Box key={i} onClick={() => setActiveIdx(i)} sx={{
-              minWidth: { xs: "85%", md: "70%" }, maxWidth: { xs: "85%", md: "70%" },
-              scrollSnapAlign: "start",
-              flexShrink: 0, cursor: "pointer",
-              transform: isActive ? "scale(1)" : "scale(0.95)",
-              opacity: isActive ? 1 : 0.5,
-              transition: "all 0.3s ease",
-            }}>
-              <Box sx={{
-                display: "flex", gap: 1, alignItems: "flex-start",
-                p: 1.5, borderRadius: "12px",
-                bgcolor: isActive ? kind.bg : "#fafafa",
-                border: `1.5px solid ${isActive ? kind.color + "30" : "#f0f0f0"}`,
-                boxShadow: isActive ? "0 2px 12px rgba(0,0,0,0.04)" : "none",
-              }}>
-                <Box sx={{
-                  width: 28, height: 28, borderRadius: "8px", flexShrink: 0,
-                  bgcolor: colors.accent,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Typography sx={{ color: "#fff", fontSize: 10, fontWeight: 700 }}>
-                    {agentInitial(entry.agent_name)}
-                  </Typography>
-                </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
-                    <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#262626" }}>
-                      {entry.agent_name}
-                    </Typography>
-                    <Box sx={{
-                      fontSize: 9, fontWeight: 700, color: kind.color,
-                      bgcolor: `${kind.color}15`, borderRadius: "4px",
-                      px: 0.5, py: 0.1,
-                    }}>
-                      {kind.label}
-                    </Box>
-                  </Box>
-                  <Typography sx={{ fontSize: 13, color: "#444", lineHeight: 1.65 }}>
-                    {entry.text}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
-    </Box>
   );
 }
