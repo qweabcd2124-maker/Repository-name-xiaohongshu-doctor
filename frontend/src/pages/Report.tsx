@@ -86,23 +86,27 @@ export default function Report() {
     ? params.tags.split(",").filter(Boolean)
     : Array.isArray(params.tags) ? params.tags : [];
 
-  // Re-score with optimized content
-  const [optimizedScore, setOptimizedScore] = useState<PreScoreResult | null>(null);
+  // Re-score: both original and optimized with SAME preScore model for fair comparison
+  const [originalPreScore, setOriginalPreScore] = useState<number | null>(null);
+  const [optimizedPreScore, setOptimizedPreScore] = useState<number | null>(null);
   const [rescoring, setRescoring] = useState(false);
 
   useEffect(() => {
     if (!report.optimized_title && !report.optimized_content) return;
     setRescoring(true);
-    preScore({
-      title: report.optimized_title || params.title,
-      content: report.optimized_content || params.content || "",
-      category: params.category,
-      tags: params.tags || "",
-      image_count: 0,
-    }).then((ps) => {
-      setOptimizedScore(ps);
+    const baseParams = { category: params.category, tags: params.tags || "", image_count: 0 };
+    Promise.all([
+      preScore({ title: params.title, content: params.content || "", ...baseParams }),
+      preScore({ title: report.optimized_title || params.title, content: report.optimized_content || params.content || "", ...baseParams }),
+    ]).then(([orig, opt]) => {
+      setOriginalPreScore(orig.total_score);
+      setOptimizedPreScore(opt.total_score);
     }).catch(() => {}).finally(() => setRescoring(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Only show comparison if optimized is actually higher
+  const scoreDelta = (originalPreScore != null && optimizedPreScore != null) ? Math.round(optimizedPreScore - originalPreScore) : null;
+  const showScoreComparison = scoreDelta != null && scoreDelta > 0;
 
   // Staggered section reveal
   const [visibleSections, setVisibleSections] = useState(0);
@@ -240,8 +244,8 @@ export default function Report() {
                   </Button>
                 )}
               </Box>
-              {/* Score comparison */}
-              {(optimizedScore || rescoring) && (
+              {/* Score comparison — only show if optimized is actually higher */}
+              {(showScoreComparison || rescoring) && (
                 <Box sx={{
                   display: "flex", alignItems: "center", justifyContent: "center",
                   gap: 1.5, mb: 2, py: 1.5, px: 2,
@@ -250,7 +254,7 @@ export default function Report() {
                   <Box sx={{ textAlign: "center" }}>
                     <Typography sx={{ fontSize: 11, color: "#999", mb: 0.25 }}>当前</Typography>
                     <Typography sx={{ fontSize: 22, fontWeight: 800, color: "#666" }}>
-                      {Math.round(report.overall_score)}
+                      {originalPreScore != null ? Math.round(originalPreScore) : Math.round(report.overall_score)}
                     </Typography>
                   </Box>
                   <ArrowForwardIcon sx={{ fontSize: 18, color: "#16a34a" }} />
@@ -258,16 +262,16 @@ export default function Report() {
                     <Typography sx={{ fontSize: 11, color: "#16a34a", mb: 0.25, fontWeight: 600 }}>优化后预估</Typography>
                     {rescoring ? (
                       <Skeleton variant="text" width={40} height={32} sx={{ mx: "auto" }} />
-                    ) : optimizedScore ? (
+                    ) : optimizedPreScore != null ? (
                       <Typography sx={{ fontSize: 22, fontWeight: 800, color: "#16a34a" }}>
-                        {Math.round(optimizedScore.total_score)}
+                        {Math.round(optimizedPreScore)}
                       </Typography>
                     ) : null}
                   </Box>
-                  {optimizedScore && (
+                  {scoreDelta != null && scoreDelta > 0 && (
                     <Box sx={{ px: 1, py: 0.4, borderRadius: "8px", bgcolor: "#dcfce7" }}>
                       <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#16a34a" }}>
-                        +{Math.round(optimizedScore.total_score - report.overall_score)}
+                        +{scoreDelta}
                       </Typography>
                     </Box>
                   )}

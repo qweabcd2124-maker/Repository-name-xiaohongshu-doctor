@@ -79,7 +79,11 @@ def _build_stable_scores(
     user_reaction_score = _clamp_score(
         content_score * 0.35 + visual_score * 0.2 + growth_score * 0.45
     )
-    overall_score = _clamp_score(float(model_a_score.get("total_score", 50)))
+    # Overall: 综合各维度平均，不直接用 model_a（model_a 偏乐观）
+    raw_overall = (content_score + visual_score + growth_score + user_reaction_score) / 4
+    model_a_overall = float(model_a_score.get("total_score", 50))
+    # 取两者加权平均，model_a 占40%，维度平均占60%（抑制过高分）
+    overall_score = _clamp_score(model_a_overall * 0.4 + raw_overall * 0.6)
 
     return {
         "content": content_score,
