@@ -480,7 +480,21 @@ class Orchestrator:
             cover_dir = None
 
         issues = _normalize_issues_items(final_report.get("issues", []))
+        # Fallback: 如果 Judge 没返回 issues，从各 Agent 汇总
+        if not issues and not is_llm_error:
+            agent_iss: list = []
+            for op in agent_opinions:
+                for iss in (op.get("issues") or [])[:2]:
+                    agent_iss.append(iss)
+            issues = _normalize_issues_items(agent_iss[:6])
         suggestions = _normalize_suggestions_items(final_report.get("suggestions", []))
+        # Fallback: 如果 Judge 没返回 suggestions，从各 Agent 的 suggestions 汇总
+        if not suggestions and not is_llm_error:
+            agent_sug: list = []
+            for op in agent_opinions:
+                for s in (op.get("suggestions") or [])[:2]:
+                    agent_sug.append(s)
+            suggestions = _normalize_suggestions_items(agent_sug[:6])
         if is_llm_error and not suggestions:
             suggestions = _normalize_suggestions_items([
                 "无法连接大模型服务，请检查网络、代理与 OPENAI_BASE_URL / API Key 配置后重试。",
