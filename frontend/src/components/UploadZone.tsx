@@ -32,6 +32,105 @@ const VIDEO_MAX_MB = 300;
 const MAX_VIDEO = VIDEO_MAX_MB * 1024 * 1024;
 
 /**
+ * 从本地视频文件解码首帧（或小 seek）并生成 JPEG 的 object URL，用于上传区缩略图。
+ * @param file - 用户选择的视频文件
+ * @returns 指向 JPEG Blob 的 object URL（调用方需在适当时机 revoke）
+ */
+async function captureVideoFirstFrameAsObjectUrl(file: File): Promise<string> {
+  const blobUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.muted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "true");
+  video.preload = "auto";
+
+  return new Promise((resolve, reject) => {
+    const teardownVideo = () => {
+      video.removeAttribute("src");
+      video.load();
+    };
+
+    const finishFail = (err: Error) => {
+      URL.revokeObjectURL(blobUrl);
+      teardownVideo();
+      reject(err);
+    };
+
+    const drawFrame = () => {
+      try {
+        const w = video.videoWidth;
+        const h = video.videoHeight;
+        if (!w || !h) {
+          finishFail(new Error("no video dimensions"));
+          return;
+        }
+        const canvas = document.createElement("canvas");
+        const maxEdge = 1024;
+        let tw = w;
+        let th = h;
+        if (Math.max(w, h) > maxEdge) {
+          const scale = maxEdge / Math.max(w, h);
+          tw = Math.round(w * scale);
+          th = Math.round(h * scale);
+        }
+        canvas.width = tw;
+        canvas.height = th;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          finishFail(new Error("no canvas context"));
+          return;
+        }
+        ctx.drawImage(video, 0, 0, tw, th);
+        canvas.toBlob(
+          (jpeg) => {
+            URL.revokeObjectURL(blobUrl);
+            teardownVideo();
+            if (!jpeg) {
+              reject(new Error("toBlob failed"));
+              return;
+            }
+            resolve(URL.createObjectURL(jpeg));
+          },
+          "image/jpeg",
+          0.88,
+        );
+      } catch (e) {
+        finishFail(e instanceof Error ? e : new Error(String(e)));
+      }
+    };
+
+    const onSeeked = () => {
+      video.removeEventListener("seeked", onSeeked);
+      drawFrame();
+    };
+
+    video.addEventListener("seeked", onSeeked);
+
+    video.onerror = () => finishFail(new Error("video decode error"));
+
+    video.addEventListener(
+      "loadeddata",
+      () => {
+        const d = video.duration;
+        const t =
+          d && !Number.isNaN(d) && Number.isFinite(d) && d > 0
+            ? Math.min(0.08, Math.max(0.001, d * 0.02))
+            : 0;
+        try {
+          video.currentTime = t;
+        } catch {
+          finishFail(new Error("seek failed"));
+        }
+      },
+      { once: true },
+    );
+
+    video.src = blobUrl;
+    video.load();
+  });
+}
+
+/**
  * Multi-file upload zone with grid preview.
  * Supports images and one video. Shows thumbnails in a responsive grid.
  */
@@ -42,32 +141,71 @@ export default function UploadZone({
   compact = false,
 }: UploadZoneProps) {
   const [previews, setPreviews] = useState<Record<string, string>>({});
+  /** 视频首帧截取失败时记录 key，回退为摄像机图标 */
+  const [videoPosterFailed, setVideoPosterFailed] = useState<Record<string, true>>({});
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /** Generate preview URLs for new files */
+  /** 为图片生成 object URL；视频异步截取首帧为 JPEG 缩略图 */
   useEffect(() => {
-    const newPreviews: Record<string, string> = {};
-    const toRevoke: string[] = [];
+    const keysNow = new Set(files.map((f) => `${f.name}_${f.size}_${f.lastModified}`));
+    let cancelled = false;
+
+    setPreviews((prev) => {
+      const next: Record<string, string> = {};
+      const toRevoke: string[] = [];
+      Object.entries(prev).forEach(([k, url]) => {
+        if (!keysNow.has(k)) toRevoke.push(url);
+      });
+      toRevoke.forEach((u) => URL.revokeObjectURL(u));
+
+      files.forEach((f) => {
+        const key = `${f.name}_${f.size}_${f.lastModified}`;
+        if (prev[key]) {
+          next[key] = prev[key];
+        } else if (IMAGE_TYPES.includes(f.type)) {
+          next[key] = URL.createObjectURL(f);
+        }
+      });
+      return next;
+    });
+
+    setVideoPosterFailed((prev) => {
+      const next: Record<string, true> = { ...prev };
+      Object.keys(prev).forEach((k) => {
+        if (!keysNow.has(k)) delete next[k];
+      });
+      return next;
+    });
 
     files.forEach((f) => {
+      if (!VIDEO_TYPES.includes(f.type)) return;
       const key = `${f.name}_${f.size}_${f.lastModified}`;
-      if (previews[key]) {
-        newPreviews[key] = previews[key];
-      } else if (IMAGE_TYPES.includes(f.type)) {
-        const url = URL.createObjectURL(f);
-        newPreviews[key] = url;
-      }
+      captureVideoFirstFrameAsObjectUrl(f)
+        .then((url) => {
+          if (cancelled) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          setPreviews((prev) => {
+            if (prev[key]) {
+              URL.revokeObjectURL(url);
+              return prev;
+            }
+            return { ...prev, [key]: url };
+          });
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setVideoPosterFailed((p) => ({ ...p, [key]: true }));
+          }
+        });
     });
 
-    Object.entries(previews).forEach(([k, url]) => {
-      if (!newPreviews[k]) toRevoke.push(url);
-    });
-    toRevoke.forEach((u) => URL.revokeObjectURL(u));
-
-    setPreviews(newPreviews);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
   }, [files]);
 
   const fileKey = (f: File) => `${f.name}_${f.size}_${f.lastModified}`;
@@ -189,9 +327,20 @@ export default function UploadZone({
                         "&:hover": { transform: "scale(1.02)", boxShadow: "0 4px 14px rgba(0,0,0,0.1)" },
                       }}
                     >
-                      {isVideo ? (
+                      {isVideo && videoPosterFailed[key] ? (
                         <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <VideocamOutlinedIcon sx={{ fontSize: 28, color: "#999" }} />
+                        </Box>
+                      ) : isVideo && previews[key] ? (
+                        <Box
+                          component="img"
+                          src={previews[key]}
+                          alt=""
+                          sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      ) : isVideo ? (
+                        <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Typography sx={{ fontSize: 11, color: "#999" }}>加载中</Typography>
                         </Box>
                       ) : previews[key] ? (
                         <Box

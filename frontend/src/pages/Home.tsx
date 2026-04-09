@@ -5,13 +5,13 @@ import axios from "axios";
 import {
   Box, Typography, TextField, Button, Chip,
   CircularProgress, useTheme,
-  useMediaQuery,
+  useMediaQuery, Alert,
 } from "@mui/material";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CategoryPicker from "../components/CategoryPicker";
 import UploadZone from "../components/UploadZone";
-import { quickRecognize, quickRecognizeVideo } from "../utils/api";
+import { quickRecognize, quickRecognizeVideo, getApiHealth } from "../utils/api";
 import type { QuickRecognizeResult } from "../utils/api";
 
 /** @returns A stable key for a File object */
@@ -126,6 +126,8 @@ export default function Home() {
   const [analyzingPulse, setAnalyzingPulse] = useState(false);
 
   const [userEdited, setUserEdited] = useState({ title: false, content: false, category: false });
+  /** null=探测中；false=连不上本机 API（多为未启动或 Vite 代理端口不对） */
+  const [apiReachable, setApiReachable] = useState<boolean | null>(null);
 
   const uploadPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const analyzePulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,6 +135,10 @@ export default function Home() {
   const prevPendingRecognitionRef = useRef(false);
 
   useEffect(() => { document.title = "薯医 NoteRx"; }, []);
+
+  useEffect(() => {
+    void getApiHealth().then(setApiReachable);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -241,7 +247,27 @@ export default function Home() {
       });
       if (!isDuplicate) mergedParts.push(part);
     }
-    const bestContent = mergedParts.join("\n");
+    let bestContent = mergedParts.join("\n");
+
+    /**
+     * 封面图 slot 模型常按要求不返 title/content_text，只返 summary。
+     * 若不回填，会出现「垂类已识别、分析完成」但标题正文全空。
+     */
+    /** 仅视频时 summary 多为画面概括，不能冒充笔记标题（标题需另传封面/标题截图） */
+    const videoOnlySuccess =
+      successRecogEntries.length > 0 &&
+      successRecogEntries.every(([, r]) => r.success && r.media_source === "video");
+
+    if (!bestTitle && bestSummary && !videoOnlySuccess) {
+      const s = bestSummary.replace(/\s+/g, " ").trim();
+      if (s) {
+        const firstPhrase = (s.split(/[。！？\n]/)[0] || s).trim();
+        bestTitle = (firstPhrase || s).slice(0, 100);
+      }
+    }
+    if (!bestContent.trim() && bestSummary.trim()) {
+      bestContent = bestSummary.trim();
+    }
 
     return {
       bestTitle, bestContent, bestCategory, bestSummary,
@@ -302,6 +328,14 @@ export default function Home() {
 
   const allFailed = allRecognitionDone && successResults.length === 0 && allResults.length > 0;
 
+  /** 全部失败时展示后端/模型返回的首条原因，便于区分「连不上 API」与「Key/模型报错」 */
+  const firstRecognizeError = useMemo(() => {
+    for (const r of Object.values(aiRecogs)) {
+      if (!r.success && r.error?.trim()) return r.error.trim();
+    }
+    return null;
+  }, [aiRecogs]);
+
   const showWarnings = allRecognitionDone && files.length > 0 && !allFailed;
   const warnings = useMemo(() => {
     if (!showWarnings) return { title: false, content: false, category: false };
@@ -323,6 +357,9 @@ export default function Home() {
     };
   }, [aggregated, userEdited]);
 
+  /** 仅有视频、无截图：笔记标题通常不在视频画面里 */
+  const videoWithoutImage = videoFileKeys.size > 0 && imageFileKeys.size === 0;
+
   const runRecognition = useCallback(async (file: File, slotHint?: "cover" | "content" | "profile" | "comments") => {
     const key = fkey(file);
     if (recognizeInFlightRef.current.has(key)) return;
@@ -335,7 +372,14 @@ export default function Home() {
       const res = file.type.startsWith("video/")
         ? await quickRecognizeVideo(file)
         : await quickRecognize(file, slotHint);
-      setAiRecogs((p) => ({ ...p, [key]: res }));
+      const merged =
+        !res.success && !res.error?.trim()
+          ? {
+              ...res,
+              error: "识别未返回有效内容，请检查 OPENAI_API_KEY、OPENAI_BASE_URL 与 LLM_MODEL_OMNI",
+            }
+          : res;
+      setAiRecogs((p) => ({ ...p, [key]: merged }));
     } catch (e: unknown) {
       let errMsg = "识别失败";
       if (axios.isAxiosError(e)) {
@@ -639,6 +683,13 @@ export default function Home() {
               )}
             </Box>
 
+            {apiReachable === false && (
+              <Alert severity="warning" sx={{ fontSize: 12, py: 0.5, borderRadius: "10px" }}>
+                无法连接本机诊断 API（/api/health）。请启动后端，并确认 Vite 代理端口与之一致（默认 8000，可在 frontend/.env 设置
+                VITE_API_PROXY_TARGET）。
+              </Alert>
+            )}
+
             <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
               <UploadZone files={files} onFilesChange={handleFilesChange} maxFiles={9} compact={isDesktop} />
             </Box>
@@ -671,10 +722,13 @@ export default function Home() {
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
                       <AnalysisStatusText />
                       <Typography sx={{ fontSize: 10, color: "#ccc", fontVariantNumeric: "tabular-nums" }}>
-                        {Object.keys(aiRecogs).length}/{imageFileKeys.size}
+                        {Object.keys(aiRecogs).length}/{Math.max(recognizeFileKeys.size, 1)}
                       </Typography>
                     </Box>
-                    <SmoothProgressBar done={Object.keys(aiRecogs).length} total={imageFileKeys.size} />
+                    <SmoothProgressBar
+                      done={Object.keys(aiRecogs).length}
+                      total={Math.max(recognizeFileKeys.size, 1)}
+                    />
                   </Box>
                 </motion.div>
               )}
@@ -688,7 +742,11 @@ export default function Home() {
               </Box>
             )}
             {allFailed && (
-              <Typography sx={{ fontSize: 11, color: "#dc2626", px: 0.5 }}>识别失败，请检查网络或手动输入</Typography>
+              <Typography sx={{ fontSize: 11, color: "#dc2626", px: 0.5, lineHeight: 1.5 }}>
+                {firstRecognizeError
+                  ? `识别失败：${firstRecognizeError}`
+                  : "识别失败，请检查网络或手动输入"}
+              </Typography>
             )}
 
           </Box>
@@ -707,6 +765,12 @@ export default function Home() {
             <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#262626", flexShrink: 0 }}>
               笔记信息
             </Typography>
+
+            {videoWithoutImage && allRecognitionDone && !allFailed && (
+              <Alert severity="info" sx={{ fontSize: 12, py: 0.75, borderRadius: "10px", flexShrink: 0 }}>
+                仅上传视频时，笔记标题一般在发布页或信息流封面，很少出现在画面里。请再传一张含标题或封面大字的截图，系统会从截图填标题；视频里的步骤与画面说明会写在正文。
+              </Alert>
+            )}
 
             {isFormBlocked && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, px: 1, py: 0.5, borderRadius: "8px", bgcolor: "#eff6ff", flexShrink: 0 }}>

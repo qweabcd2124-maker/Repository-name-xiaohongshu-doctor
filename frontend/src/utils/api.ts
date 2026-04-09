@@ -17,6 +17,18 @@ const api = axios.create({
   timeout: 120_000,
 });
 
+/**
+ * 探测本机后端是否经 Vite 代理可达（与快识/诊断是否「网络问题」无关，只测到 API 进程）。
+ */
+export async function getApiHealth(): Promise<boolean> {
+  try {
+    const { data } = await api.get<{ ok?: boolean }>("/health", { timeout: 5000 });
+    return data?.ok === true;
+  } catch {
+    return false;
+  }
+}
+
 export interface DiagnoseParams {
   title: string;
   content: string;
@@ -323,6 +335,8 @@ export type SlotType = "cover" | "content" | "profile" | "comments";
 
 export interface QuickRecognizeResult {
   success: boolean;
+  /** image=截图快识；video=视频快识（标题应另传封面/标题截图） */
+  media_source?: "image" | "video";
   slot_type: string;
   extra_slots?: string[];
   category: string;
@@ -369,7 +383,11 @@ export async function quickRecognize(
   const { data } = await api.post<QuickRecognizeResult>(
     "/screenshot/quick-recognize",
     fd,
-    { headers: { "Content-Type": "multipart/form-data" } }
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      /** 视觉 60s + OCR，与后端留余量 */
+      timeout: 180_000,
+    },
   );
   return data;
 }
