@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import os
+from typing import Optional
 
 
 def mimo_video_fps() -> float:
@@ -32,16 +33,29 @@ def mimo_video_media_resolution() -> str:
     return r if r in ("default", "max") else "default"
 
 
-def build_mimo_video_url_content_part(video_url: str) -> dict:
+def build_mimo_video_url_content_part(
+    video_url: str,
+    *,
+    fps: Optional[float] = None,
+    media_resolution: Optional[str] = None,
+) -> dict:
     """
     构造单条 user content part：`video_url` + `media_resolution`。
     @param video_url - 公网 HTTPS（推荐）可访问的视频直链
+    @param fps - 若给定则覆盖环境变量采样帧率，否则沿用 mimo_video_fps()
+    @param media_resolution - `default` | `max`，未给定则沿用环境变量
     """
+    fps_val = mimo_video_fps() if fps is None else max(0.1, min(float(fps), 10.0))
+    if media_resolution is None:
+        res = mimo_video_media_resolution()
+    else:
+        r = str(media_resolution).strip().lower()
+        res = r if r in ("default", "max") else mimo_video_media_resolution()
     return {
         "type": "video_url",
         "video_url": {
             "url": video_url,
-            "fps": mimo_video_fps(),
+            "fps": fps_val,
         },
-        "media_resolution": mimo_video_media_resolution(),
+        "media_resolution": res,
     }

@@ -30,6 +30,34 @@ from app.api.diagnose import (
 router = APIRouter()
 logger = logging.getLogger("noterx.screenshot")
 
+
+def _env_int(name: str, default: int, *, min_v: int, max_v: int) -> int:
+    """读取整数环境变量并夹紧到 [min_v, max_v]。"""
+    try:
+        v = int(os.getenv(name, str(default)))
+    except ValueError:
+        v = default
+    return max(min_v, min(v, max_v))
+
+
+def _env_float(name: str, default: float, *, min_v: float, max_v: float) -> float:
+    """读取浮点环境变量并夹紧到 [min_v, max_v]。"""
+    try:
+        v = float(os.getenv(name, str(default)))
+    except ValueError:
+        v = default
+    return max(min_v, min(v, max_v))
+
+
+def _quick_image_max_out_tokens() -> int:
+    """快识图片：默认与 .env.example 建议一致，避免过大 max_completion_tokens 被网关拒掉。"""
+    return _env_int("QUICK_RECOGNIZE_MAX_COMPLETION_TOKENS", 2048, min_v=256, max_v=8192)
+
+
+def _quick_ocr_max_tokens() -> int:
+    return _env_int("QUICK_RECOGNIZE_OCR_MAX_TOKENS", 512, min_v=128, max_v=4096)
+
+
 MAX_IMAGE_SIZE = 10 * 1024 * 1024
 ALLOWED_IMAGE_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_VIDEO_MIME = {"video/mp4", "video/webm", "video/quicktime"}
@@ -88,19 +116,56 @@ _QUICK_PROMPT = """你是小红书截图分类与文字提取工具。
 仅输出 JSON：
 {"slot_type": "cover|content|profile|comments|other", "extra_slots": [], "category": "", "title": "", "content_text": "", "summary": "", "confidence": 0.0, "publisher": {"name": "", "follower_count": ""}, "engagement_signal": {"likes_visible": 0, "collects_visible": 0, "comments_visible": 0, "is_high_engagement": false}}"""
 
-_VIDEO_QUICK_PROMPT = """你是小红书内容理解助手。用户上传了一段**视频**（可能是笔记录屏、Vlog、商品展示、成品笔记预览等）。
+_VIDEO_QUICK_PROMPT = """你是小红书内容理解助手。用户上传了一段**视频**（录屏、Vlog、步骤演示等）。
 
-请根据画面、字幕与口播可见信息（如有）推断笔记形态，输出与截图快识**相同字段**的 JSON：
-1) slot_type：多为 content；若几乎只有封面大字则 cover；整屏为个人主页则 profile；几乎只有评论列表则 comments；否则 other。
-2) extra_slots：数组，规则同截图快识（分屏含评论区时含 "comments"，否则 []）。
-3) category：垂类（穿搭、美食、数码、旅行、美妆、健身、生活、家居等）。
-4) title：画面或字幕中清晰的笔记标题务必写入；若无则根据主题拟一条不超过 40 字的标题钩子，勿编造具体数字/价格。
-5) content_text：可见正文、话题标签、或按时间线列出的视频要点；没有则写 2～4 句主题描述。
-6) summary：1～2 句整体概括。
-7) confidence：0～1。
+## 关于 title（极其重要）
+小红书**笔记标题**一般在**发布页的标题输入区或信息流封面大字**，**不会**等同于「视频里在讲什么」。
+- **title 请几乎恒为 ""**（空字符串）。除非画面里**明确出现与 App 发布页一致的标题栏文案**（极少见）。
+- **禁止**把下列内容写入 title：画面说明、步骤提示（如「切记不要焯水」）、口播摘要、贴纸/花字、**「视频展示…」「画面中…」类描述句**。
+- 用户若要自动填标题，应**另上传一张含笔记标题/封面的截图**；本接口只处理视频。
+
+## content_text = 全文字幕摘录（供后续评审，极其重要）
+你必须**通篇观看整段视频**（从开头到结尾），不能只依据前几秒或片段猜测。
+- **content_text 的正文语义 = 字幕全文**：按**时间顺序**串联，尽量**逐字摘录**视频中出现的：
+  - 画面内**字幕条、花字、贴纸、角标、弹窗文字**等所有可读文案；
+  - 若画面无字但有清晰口播，则把口播**转写成连续文本**（与字幕同等对待）。
+- **禁止**用「视频展示了…」「画面中一位…」「本视频主要讲…」这类**元描述**充当正文主体；若需一句总览，只放在 summary。
+- 话题标签 #xxx 若出现，按出现顺序并入 content_text 末尾或对应句旁，勿单独编造标签。
+- **严禁编造**；听不清/看不清处用 `[无法辨识]` 占位，可注明大致时段（如 `[约00:15 无法辨识]`）。
+- 同一句字幕/口播在画面中**明显重复多次**时，可合并为一句并注明「（重复）」，避免无意义堆砌。
+
+## 其它字段
+1) slot_type：多为 content；整屏主页 profile；几乎只有评论列表 comments；否则 other。
+2) extra_slots：规则同截图快识。
+3) category：垂类。
+4) summary：**仅** 1～2 句整体提要（给人类快速扫一眼），**不得**替代 content_text；不得把字幕正文只写在 summary 而 content_text 留空。
+5) confidence：0～1，反映你对「字幕摘录完整度与准确度」的把握。
+
+## 错误示例 vs 正确示例（必须遵守）
+- **错误** content_text：「视频帧显示一位女士在厨房烹饪蘑菇，并叠加字幕提示不要焯水。」（这是**旁白式说明**，禁止）
+- **正确** content_text：多行**字幕原文**，例如：「这就是我家餐桌上\\n出现率最多的一道菜\\n切记不要焯水」（逐字来自画面/口播，不要改写成「提示不要焯水」以外的意译段落）
 
 仅输出合法 JSON，不要用 markdown 代码块：
 {"slot_type": "", "extra_slots": [], "category": "", "title": "", "content_text": "", "summary": "", "confidence": 0.0}"""
+
+_VIDEO_SUBTITLE_TRANSCRIPT_PROMPT = """你是视频字幕与口播听写专员。输入为**完整视频**（已上传）。
+
+## 唯一任务
+通篇观看**从开头到结尾**，按**时间顺序**列出**每一条**出现的：
+- 画面内字幕条、花字、贴纸、角标上的文字（逐字）；
+- 清晰可辨的**口播**（按句拆成多条）。
+
+## 输出格式（仅此一种）
+只输出合法 JSON，不要用 markdown 代码块：
+{"subtitle_lines":["第一句","第二句","第三句",...]}
+
+## 铁律
+- **subtitle_lines 数组越长越好**：不要合并成一两句摘要；不要把全片压成一条。
+- **禁止**输出 category、title、summary、slot_type 等其它字段。
+- **禁止**写「视频展示了」「画面中」等旁白描述；数组里**只放原文台词/字幕**。
+- 视频中后段、结尾的字幕与口播**必须与开头同等对待**，不可只写开头一句（例如只写「切记不要焯水」而漏掉前面多句花字是绝对错误）。
+- 听不清处单条写 `[无法辨识]`；不要编造。
+- 同一句在视频中反复出现可只保留一条并在该条末尾加「（重复）」。"""
 
 _DEEP_PROMPT_COVER = """分析这张封面截图的视觉吸引力，输出 JSON：
 {"visual_score": 0-100, "color_scheme": "配色描述", "composition": "构图评价", "text_overlay": "文字覆盖率评价", "suggestions": ["建议1", "建议2"]}"""
@@ -292,6 +357,67 @@ async def _vision_call(
         return {"raw_text": raw, "error": "JSON解析失败"}
 
 
+def _sanitize_video_derived_title(result: dict) -> None:
+    """
+    视频快识易把「画面描述」误填进 title。清空并并入 content_text，避免与真实笔记标题混淆。
+    """
+    t = str(result.get("title", "")).strip()
+    if not t:
+        return
+    bad = False
+    if t.startswith("视频"):
+        bad = True
+    if "展示" in t and len(t) >= 8:
+        bad = True
+    if any(k in t for k in ("叠加文字", "叠加", "字幕提示", "口播", "镜头中", "画面中")):
+        bad = True
+    if "画面" in t and any(k in t for k in ("一位", "一名", "有人", "女性", "男性")):
+        bad = True
+    if not bad:
+        return
+    ct = str(result.get("content_text", "")).strip()
+    result["content_text"] = f"{t}\n{ct}".strip() if ct else t
+    result["title"] = ""
+
+
+def _content_text_looks_like_video_scene_caption(text: str) -> bool:
+    """
+    判断 content_text 是否为「视频帧显示…叠加字幕…」类画面说明，而非逐字字幕摘录。
+    命中则应收窄/清空并走抽帧或 OCR 兜底。
+    """
+    s = str(text or "").strip()
+    if not s:
+        return False
+    markers = (
+        "视频帧显示",
+        "视频帧中",
+        "视频显示一位",
+        "视频展示一位",
+        "叠加字幕提示",
+        "并叠加字幕",
+        "画面中一位",
+        "画面中一名",
+        "画面显示一位",
+        "镜头中一位",
+        "本视频主要",
+        "本视频展示",
+        "视频展示了",
+    )
+    if any(m in s for m in markers):
+        return True
+    # 整段像一句旁白：以「视频」开头且含「显示/展示」且偏长
+    if s.startswith("视频") and len(s) >= 12 and ("显示" in s or "展示" in s):
+        return True
+    return False
+
+
+def _sanitize_video_meta_narrative_content(result: dict) -> None:
+    """若正文被填成画面叙述而非字幕原文，清空 content_text，便于触发抽帧/OCR。"""
+    ct = str(result.get("content_text", "")).strip()
+    if ct and _content_text_looks_like_video_scene_caption(ct):
+        result["content_text"] = ""
+
+
 def _normalize_quick_recognition_fields(result: dict) -> None:
     """统一快识字段：slot_type、extra_slots 及 cover/content 下的 title 规则。"""
     slot_type = _normalize_slot_type(result.get("slot_type", ""))
@@ -312,20 +438,94 @@ def _quick_payload_is_empty(result: dict) -> bool:
     )
 
 
+def _video_subtitle_payload_insufficient(result: dict) -> bool:
+    """
+    视频快识：无可用字幕正文（含模型把画面说明误填进 content_text）时需抽帧或 OCR。
+    """
+    ct = str(result.get("content_text", "")).strip()
+    if ct and _content_text_looks_like_video_scene_caption(ct):
+        return True
+    return _quick_payload_is_empty(result)
+
+
+def _quick_video_mimo_part(video_url: str) -> dict:
+    """
+    视频快识专用：略提高默认 fps、默认 max 分辨率，利于扫到更多花字帧。
+    可通过 QUICK_RECOGNIZE_VIDEO_FPS、QUICK_RECOGNIZE_VIDEO_MEDIA_RESOLUTION 覆盖。
+    """
+    fps = _env_float("QUICK_RECOGNIZE_VIDEO_FPS", 4.0, min_v=0.5, max_v=10.0)
+    res_raw = (os.getenv("QUICK_RECOGNIZE_VIDEO_MEDIA_RESOLUTION") or "max").strip().lower()
+    res = res_raw if res_raw in ("default", "max") else "max"
+    return build_mimo_video_url_content_part(video_url, fps=fps, media_resolution=res)
+
+
+def _parse_subtitle_lines_payload(raw: object) -> list[str]:
+    """从专向听写 JSON 中解析 subtitle_lines（兼容 lines / subtitles）。"""
+    if not isinstance(raw, dict):
+        return []
+    for key in ("subtitle_lines", "lines", "subtitles"):
+        val = raw.get(key)
+        if isinstance(val, list):
+            out: list[str] = []
+            for x in val:
+                s = str(x).strip()
+                if not s:
+                    continue
+                for ln in s.split("\n"):
+                    t = ln.strip()
+                    if t:
+                        out.append(t)
+            return out
+        if isinstance(val, str) and val.strip():
+            return [ln.strip() for ln in val.replace("；", "\n").split("\n") if ln.strip()]
+    return []
+
+
+def _merge_subtitle_transcript_into_result(result: dict, lines: list[str]) -> None:
+    """
+    将第二轮「专向听写」结果并入 content_text：在明显比首轮更完整时覆盖。
+    """
+    cleaned = [str(x).strip() for x in lines if x and str(x).strip()]
+    if not cleaned:
+        return
+    transcript = "\n".join(cleaned)
+    prev = str(result.get("content_text", "")).strip()
+    n_lines = len(cleaned)
+    prev_lines = prev.count("\n") + (1 if prev else 0)
+    much_richer = (
+        len(transcript) > int(len(prev) * 1.05)
+        or n_lines >= max(3, prev_lines + 1)
+        or (n_lines >= 2 and prev_lines <= 1)
+    )
+    if not prev or much_richer:
+        result["content_text"] = transcript
+        logger.info(
+            "视频快识专向听写合并: lines=%s prev_len=%s new_len=%s",
+            n_lines,
+            len(prev),
+            len(transcript),
+        )
+
+
 async def _video_url_quick_call(client, video_url: str) -> dict:
     """
     通过 MiMo 视频理解（video_url content part）请求模型，返回与快识相同结构的 JSON。
     消息体对齐：https://platform.xiaomimimo.com/#/docs/usage-guide/multimodal-understanding/video-understanding
     """
     resolved_model = os.getenv("LLM_MODEL_OMNI", "mimo-v2-omni")
-    out_cap = int(os.getenv("QUICK_RECOGNIZE_VIDEO_MAX_COMPLETION_TOKENS", "32768"))
-    video_part = build_mimo_video_url_content_part(video_url)
+    out_cap = _env_int("QUICK_RECOGNIZE_VIDEO_MAX_COMPLETION_TOKENS", 4096, min_v=256, max_v=8192)
+    video_part = _quick_video_mimo_part(video_url)
     kwargs = {
         "model": resolved_model,
         "messages": [
             {
                 "role": "system",
-                "content": "You return ONLY valid JSON for Xiaohongshu note understanding; no markdown fences.",
+                "content": (
+                    "Return ONLY valid JSON; no markdown fences. "
+                    "Field content_text must be VERBATIM subtitle/caption/on-screen text lines "
+                    "(and clear voiceover transcription) in time order — NOT a prose description "
+                    "of scenes (never start with phrases like 'the video shows' or scene summaries)."
+                ),
             },
             {
                 "role": "user",
@@ -335,7 +535,7 @@ async def _video_url_quick_call(client, video_url: str) -> dict:
                 ],
             },
         ],
-        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.3")),
+        "temperature": min(float(os.getenv("LLM_TEMPERATURE", "0.3")), 0.15),
     }
     if _is_mimo_openai_compat():
         kwargs["max_completion_tokens"] = out_cap
@@ -353,6 +553,56 @@ async def _video_url_quick_call(client, video_url: str) -> dict:
         if isinstance(parsed, dict):
             return parsed
         return {"raw_text": raw, "error": "JSON解析失败"}
+
+
+async def _video_url_subtitle_transcript_call(client, video_url: str) -> list[str]:
+    """
+    第二轮：同一 video_url，仅请求 subtitle_lines，减轻模型在 category/summary 上分心导致只摘一句的问题。
+    """
+    resolved_model = os.getenv("LLM_MODEL_OMNI", "mimo-v2-omni")
+    out_cap = _env_int(
+        "QUICK_RECOGNIZE_VIDEO_TRANSCRIPT_MAX_COMPLETION_TOKENS",
+        8192,
+        min_v=512,
+        max_v=8192,
+    )
+    video_part = _quick_video_mimo_part(video_url)
+    kwargs = {
+        "model": resolved_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "Return ONLY valid JSON with a single key subtitle_lines (array of strings). "
+                    "Each string is one caption or spoken line in time order. No markdown fences."
+                ),
+            },
+            {
+                "role": "user",
+                "content": [
+                    video_part,
+                    {"type": "text", "text": _VIDEO_SUBTITLE_TRANSCRIPT_PROMPT},
+                ],
+            },
+        ],
+        "temperature": min(float(os.getenv("LLM_TEMPERATURE", "0.3")), 0.1),
+    }
+    if _is_mimo_openai_compat():
+        kwargs["max_completion_tokens"] = out_cap
+    else:
+        kwargs["max_tokens"] = out_cap
+
+    resp = await client.chat.completions.create(**kwargs)
+    raw = (resp.choices[0].message.content or "").strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        parsed = _parse_json_from_llm_text(raw)
+        if not isinstance(parsed, dict):
+            return []
+    return _parse_subtitle_lines_payload(parsed)
 
 
 async def _ocr_supplement_quick_result(client, image_bytes: bytes, result: dict, ocr_cap: int) -> None:
@@ -407,8 +657,8 @@ async def quick_recognize(
         prompt += f"\n提示：用户表明这是一张「{SLOT_LABELS[slot_hint]}」。"
 
     # 快识走 _vision_call 默认 LLM_MODEL_OMNI（多模态）；勿单独改用纯文本模型。
-    quick_max_out = int(os.getenv("QUICK_RECOGNIZE_MAX_COMPLETION_TOKENS", "32768"))
-    ocr_cap = int(os.getenv("QUICK_RECOGNIZE_OCR_MAX_TOKENS", "32768"))
+    quick_max_out = _quick_image_max_out_tokens()
+    ocr_cap = _quick_ocr_max_tokens()
 
     try:
         result = await _vision_call(
@@ -418,6 +668,22 @@ async def quick_recognize(
             max_out_tokens=quick_max_out,
             image_mime=image_mime,
         )
+        if not isinstance(result, dict):
+            result = {}
+        if result.get("error"):
+            logger.warning("快识视觉阶段失败: %s", result.get("error"))
+            return {
+                "success": False,
+                "error": str(result.get("error", "视觉识别失败")),
+                "media_source": "image",
+                "slot_type": slot_hint or str(result.get("slot_type", "unknown")),
+                "extra_slots": [],
+                "category": "",
+                "summary": "",
+                "title": "",
+                "content_text": "",
+                "confidence": 0.0,
+            }
         _normalize_quick_recognition_fields(result)
         slot_type = str(result.get("slot_type", ""))
         logger.info(
@@ -430,12 +696,28 @@ async def quick_recognize(
         )
 
         await _ocr_supplement_quick_result(client, image_bytes_raw, result, ocr_cap)
-        return {"success": True, **result}
+        if _quick_payload_is_empty(result):
+            return {
+                "success": False,
+                "error": "未识别到有效标题、正文或摘要，请换更清晰截图或手动填写",
+                "media_source": "image",
+                "slot_type": str(result.get("slot_type", slot_hint or "unknown")),
+                "extra_slots": result.get("extra_slots") or [],
+                "category": str(result.get("category", "")),
+                "summary": str(result.get("summary", "")),
+                "title": str(result.get("title", "")),
+                "content_text": str(result.get("content_text", "")),
+                "confidence": float(result.get("confidence") or 0.0),
+            }
+        out = {"success": True, **result}
+        out["media_source"] = "image"
+        return out
     except Exception as e:
         logger.error("快速识别失败: %s", e)
         return {
             "success": False,
             "error": str(e),
+            "media_source": "image",
             "slot_type": slot_hint or "unknown",
             "extra_slots": [],
             "category": "",
@@ -463,10 +745,11 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
     mime = (file.content_type or "video/mp4").strip()
     container_ext = MIME_TO_EXT.get(mime, ".mp4")
     client = _get_client()
-    quick_max_out = int(os.getenv("QUICK_RECOGNIZE_MAX_COMPLETION_TOKENS", "32768"))
-    ocr_cap = int(os.getenv("QUICK_RECOGNIZE_OCR_MAX_TOKENS", "32768"))
+    quick_max_out = _quick_image_max_out_tokens()
+    ocr_cap = _quick_ocr_max_tokens()
 
     result: dict = {}
+    video_url_mimo: Optional[str] = None
     url_diag = get_public_base_url_diagnostics(request)
     try_mimo_video_url = mime in MIMO_VIDEO_MIME and bool(url_diag.get("ok"))
     if not try_mimo_video_url and mime in MIMO_VIDEO_MIME:
@@ -479,8 +762,8 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
         )
     if try_mimo_video_url:
         try:
-            video_url = _store_temp_video_and_build_url(request, video_bytes, mime)
-            raw = await _video_url_quick_call(client, video_url)
+            video_url_mimo = _store_temp_video_and_build_url(request, video_bytes, mime)
+            raw = await _video_url_quick_call(client, video_url_mimo)
             if isinstance(raw, dict):
                 result = raw
             logger.info("视频快识 video_url 完成 keys=%s", list(result.keys()))
@@ -492,35 +775,65 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
         result = {}
 
     _normalize_quick_recognition_fields(result)
+    _sanitize_video_derived_title(result)
+    _sanitize_video_meta_narrative_content(result)
+
+    if video_url_mimo:
+        try:
+            lines = await _video_url_subtitle_transcript_call(client, video_url_mimo)
+            _merge_subtitle_transcript_into_result(result, lines)
+        except Exception as e:
+            logger.warning("视频快识专向听写失败: %s", e)
+        _sanitize_video_derived_title(result)
+        _sanitize_video_meta_narrative_content(result)
 
     frame_jpeg: Optional[bytes] = None
-    if _quick_payload_is_empty(result):
+    if _video_subtitle_payload_insufficient(result):
         frame_jpeg = _extract_first_video_frame(video_bytes, container_ext)
         if frame_jpeg:
             try:
                 img_bytes, img_mime = _prepare_quick_recognize_image(frame_jpeg)
-                fp = _QUICK_PROMPT + "\n提示：这是一段视频中的**代表帧**（非完整视频），请根据画面推断笔记标题与正文要点。"
+                fp = _QUICK_PROMPT + (
+                    "\n## 视频代表帧专规（优先于上文）\n"
+                    "输入为视频暂停画面；**忽略画面中央的播放按钮图标**（UI 装饰，不是字幕）。\n"
+                    "**content_text 只许写画面上字幕/花字/贴纸的逐字原文**，多行用换行分隔；"
+                    "一句一行，与画面中字形一致，不要意译成长句。\n"
+                    "**绝对禁止**在 content_text 里写：「视频帧显示」「画面中一位」「并叠加字幕提示」"
+                    "「视频展示了」等**场景旁白**；旁白式内容若必须输出，只能放在 summary（一句以内）。\n"
+                    "**title 留空 \"\"**，除非出现发布页标题栏。\n"
+                    "slot_type 判为 content（有字幕/花字时）。无可见文字时 content_text 为 \"\"。\n"
+                    "完整视频的逐句口播需整段 video_url 理解；本帧仅 OCR 可见花字。"
+                )
                 fr = await _vision_call(
                     client, fp, img_bytes, max_out_tokens=quick_max_out, image_mime=img_mime
                 )
-                if isinstance(fr, dict):
+                if isinstance(fr, dict) and not fr.get("error"):
                     result = fr
                     _normalize_quick_recognition_fields(result)
+                    _sanitize_video_derived_title(result)
+                    _sanitize_video_meta_narrative_content(result)
                     logger.info("视频快识抽帧视觉完成 slot_type=%s", result.get("slot_type"))
+                elif isinstance(fr, dict) and fr.get("error"):
+                    logger.warning("视频快识抽帧视觉失败: %s", fr.get("error"))
             except Exception as e:
                 logger.warning("视频快识抽帧视觉失败: %s", e)
 
     if frame_jpeg is None and (
-        not str(result.get("title", "")).strip() or not str(result.get("content_text", "")).strip()
+        not str(result.get("title", "")).strip()
+        or not str(result.get("content_text", "")).strip()
+        or _content_text_looks_like_video_scene_caption(str(result.get("content_text", "")).strip())
     ):
         frame_jpeg = _extract_first_video_frame(video_bytes, container_ext)
     if frame_jpeg:
         await _ocr_supplement_quick_result(client, frame_jpeg, result, ocr_cap)
 
+    _sanitize_video_meta_narrative_content(result)
+
     if _quick_payload_is_empty(result):
         return {
             "success": False,
             "error": "无法从视频中识别有效文字或主题，请换片段或手动填写",
+            "media_source": "video",
             "slot_type": "other",
             "extra_slots": [],
             "category": "",
@@ -530,13 +843,18 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
             "confidence": 0.0,
         }
 
+    _sanitize_video_derived_title(result)
+    _sanitize_video_meta_narrative_content(result)
+
     logger.info(
         "视频快识最终结果: slot_type=%s title=%s category=%s",
         result.get("slot_type"),
         str(result.get("title", ""))[:50],
         result.get("category", ""),
     )
-    return {"success": True, **result}
+    out = {"success": True, **result}
+    out["media_source"] = "video"
+    return out
 
 
 @router.post("/screenshot/deep-analyze")
