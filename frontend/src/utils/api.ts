@@ -295,7 +295,6 @@ export type SlotType = "cover" | "content" | "profile" | "comments";
 export interface QuickRecognizeResult {
   success: boolean;
   slot_type: string;
-  /** 同屏多区域时附加类型，如分屏含评论区时为 ["comments"] */
   extra_slots?: string[];
   category: string;
   title?: string;
@@ -303,6 +302,12 @@ export interface QuickRecognizeResult {
   summary: string;
   confidence?: number;
   error?: string;
+  engagement_signal?: {
+    likes_visible: number;
+    collects_visible: number;
+    comments_visible: number;
+    is_high_engagement: boolean;
+  };
 }
 
 export interface DeepAnalysisResult {

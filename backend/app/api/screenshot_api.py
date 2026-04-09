@@ -76,9 +76,14 @@ _QUICK_PROMPT = """你是小红书截图分类与文字提取工具。
 - category：根据图片内容判断垂类（美食/穿搭/科技/旅行/生活）
 - summary：1-2句概括
 - extra_slots：同屏含评论区时 ["comments"]，否则 []
+- engagement_signal：从截图中可见的流量信号（如能看到点赞数、收藏数、评论数则提取）
+  - likes_visible：图中可见的点赞数（整数，看不到则 0）
+  - collects_visible：图中可见的收藏数（整数，看不到则 0）
+  - comments_visible：图中可见的评论数（整数，看不到则 0）
+  - is_high_engagement：如果可见互动数据较高（点赞>1000 或 收藏>500）则 true，否则 false
 
 仅输出 JSON：
-{"slot_type": "cover|content|profile|comments|other", "extra_slots": [], "category": "", "title": "", "content_text": "", "summary": "", "confidence": 0.0}"""
+{"slot_type": "cover|content|profile|comments|other", "extra_slots": [], "category": "", "title": "", "content_text": "", "summary": "", "confidence": 0.0, "engagement_signal": {"likes_visible": 0, "collects_visible": 0, "comments_visible": 0, "is_high_engagement": false}}"""
 
 _VIDEO_QUICK_PROMPT = """你是小红书内容理解助手。用户上传了一段**视频**（可能是笔记录屏、Vlog、商品展示、成品笔记预览等）。
 

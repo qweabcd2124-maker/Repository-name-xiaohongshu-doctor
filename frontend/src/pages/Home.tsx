@@ -34,8 +34,36 @@ const CAT_MAP: Record<string, string> = {
   "beauty": "beauty", "fitness": "fitness", "lifestyle": "lifestyle", "home": "home",
 };
 
-/** 快识并行路数：略限流可减少总排队，利于接近「单张 <5s」的体感 */
+/** 快识并行路数 */
 const QUICK_RECOGNIZE_CONCURRENCY = 3;
+
+/** 分析中轮播文案 */
+const ANALYSIS_MESSAGES = [
+  "正在全面分析笔记内容...",
+  "正在调用市场流量预测模型...",
+  "正在识别封面视觉元素...",
+  "正在提取标题和正文...",
+  "正在比对同类笔记数据...",
+  "正在评估互动潜力...",
+];
+
+function AnalysisStatusText() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % ANALYSIS_MESSAGES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div key={idx} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
+        <Typography sx={{ fontSize: 11, color: "#999", fontWeight: 500 }}>
+          {ANALYSIS_MESSAGES[idx]}
+        </Typography>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 /** 首页：桌面端双栏布局，移动端单页布局 */
 export default function Home() {
@@ -390,12 +418,15 @@ export default function Home() {
     if (!title.trim()) { setSubmitError("请输入笔记标题"); return; }
     if (lockInputs || isFormBlocked) { setSubmitError("AI 识别中，请稍等"); return; }
     setSubmitError("");
+    // Check if any recognition result shows high engagement
+    const hasHighEngagement = successResults.some(r => r.engagement_signal?.is_high_engagement);
     navigate("/diagnosing", {
       state: {
         title, content, tags: "", category,
         coverFile: files.find((f) => f.type.startsWith("image/")) ?? null,
         coverImages: files.filter((f) => f.type.startsWith("image/")),
         videoFile: files.find((f) => f.type.startsWith("video/")) ?? null,
+        hasHighEngagement,
       },
     });
   };
@@ -456,7 +487,7 @@ export default function Home() {
             display: { xs: "none", md: "block" },
             fontSize: 12, color: "#999", fontWeight: 500,
           }}>
-            AI 笔记诊断 · 大量真实数据训练
+            基于大量数据训练用户画像和流量预测模型
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -532,34 +563,65 @@ export default function Home() {
               <UploadZone files={files} onFilesChange={handleFilesChange} maxFiles={9} compact={isDesktop} />
             </Box>
 
-            {/* Slot chips + AI status — 同一行 */}
+            {/* Slot chips */}
             <AnimatePresence>
               {files.length > 0 && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
                   style={{ flexShrink: 0 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.75 }}>
-                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", alignItems: "center" }}>
-                      {Object.entries(slotLabelMap).map(([slot, label]) => (
-                        <Chip key={slot} size="small" label={label}
-                          color={recognizedSlots.has(slot) ? "success" : "default"}
-                          variant={recognizedSlots.has(slot) ? "filled" : "outlined"}
-                          sx={{ fontSize: 10, height: 20 }} />
-                      ))}
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      {(anyLoading || (processingStatus && processingStatus.tone === "info")) && (
-                        <CircularProgress size={12} thickness={5} sx={{ color: "#ff2442" }} />
-                      )}
-                      {isReady && <CheckCircleIcon sx={{ fontSize: 13, color: "#16a34a" }} />}
-                      <Typography sx={{ fontSize: 11, color: allFailed ? "#dc2626" : isReady ? "#16a34a" : "#999", fontWeight: 500 }}>
-                        {allFailed ? "识别失败" : isReady ? "完成" : anyLoading ? "识别中" : ""}
+                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", alignItems: "center" }}>
+                    {Object.entries(slotLabelMap).map(([slot, label]) => (
+                      <Chip key={slot} size="small" label={label}
+                        color={recognizedSlots.has(slot) ? "success" : "default"}
+                        variant={recognizedSlots.has(slot) ? "filled" : "outlined"}
+                        sx={{ fontSize: 10, height: 20 }} />
+                    ))}
+                  </Box>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* AI analysis progress bar */}
+            <AnimatePresence>
+              {(anyLoading || pendingRecognition) && files.length > 0 && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }}
+                  style={{ flexShrink: 0 }}>
+                  <Box sx={{ px: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+                      <AnalysisStatusText />
+                      <Typography sx={{ fontSize: 10, color: "#ccc", fontVariantNumeric: "tabular-nums" }}>
+                        {Object.keys(aiRecogs).length}/{files.filter(f => f.type.startsWith("image/")).length}
                       </Typography>
+                    </Box>
+                    <Box sx={{ height: 3, bgcolor: "#f0f0f0", borderRadius: 2, overflow: "hidden" }}>
+                      <Box sx={{
+                        height: "100%", borderRadius: 2, bgcolor: "#ff2442",
+                        width: `${imageFileKeys.size === 0 ? 0 : (Object.keys(aiRecogs).length / imageFileKeys.size) * 100}%`,
+                        transition: "width 0.5s ease",
+                        position: "relative",
+                        "&::after": {
+                          content: '""', position: "absolute", inset: 0,
+                          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+                          animation: "shimmer 2s infinite",
+                        },
+                      }} />
                     </Box>
                   </Box>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Ready state */}
+            {isReady && files.length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 0.5 }}>
+                <CheckCircleIcon sx={{ fontSize: 13, color: "#16a34a" }} />
+                <Typography sx={{ fontSize: 11, color: "#16a34a", fontWeight: 600 }}>分析完成，可以开始诊断</Typography>
+              </Box>
+            )}
+            {allFailed && (
+              <Typography sx={{ fontSize: 11, color: "#dc2626", px: 0.5 }}>识别失败，请检查网络或手动输入</Typography>
+            )}
 
           </Box>
 

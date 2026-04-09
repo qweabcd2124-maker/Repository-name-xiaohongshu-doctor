@@ -26,7 +26,7 @@ const DIM_COLORS: Record<string, string> = {
 
 /* ── Steps ── */
 const STEPS = [
-  { label: "数据预评分", desc: "基于 874 条真实数据即时量化" },
+  { label: "数据预评分", desc: "基于大量数据训练的流量预测模型" },
   { label: "解析笔记内容", desc: "提取标题、正文、标签信息" },
   { label: "分析封面视觉", desc: "评估构图、色彩、文字占比" },
   { label: "对比垂类数据", desc: "与数千条同类笔记基线对比" },
@@ -401,7 +401,7 @@ export default function Diagnosing() {
                   </Box>
                 ))}
                 <Typography sx={{ fontSize: 10, color: "#ccc", mt: 1, textAlign: "center" }}>
-                  基于 {preScoreData.baseline.sample_size} 条数据
+                  基于大量数据训练
                 </Typography>
               </Box>
             )}
