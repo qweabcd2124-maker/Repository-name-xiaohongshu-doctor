@@ -116,14 +116,6 @@ const FUN_FACTS = [
 /* (CATEGORY_LABEL removed — category shown via preScoreData.category_cn) */
 
 
-/* ── Agent status config ── */
-const AGENTS = [
-  { name: "content", label: "内容分析师", activeStep: 4, doneStep: 5 },
-  { name: "visual", label: "视觉诊断师", activeStep: 4, doneStep: 6 },
-  { name: "growth", label: "增长策略师", activeStep: 4, doneStep: 7 },
-  { name: "user", label: "用户模拟器", activeStep: 4, doneStep: 8 },
-  { name: "judge", label: "综合裁判", activeStep: 9, doneStep: 10 },
-];
 
 /* ── Score ring component ── */
 function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
@@ -394,7 +386,6 @@ export default function Diagnosing() {
 
   const progress = ((step + 1) / STEPS.length) * 100;
 
-  const currentStep = STEPS[Math.min(step, STEPS.length - 1)];
 
   return (
     <Box sx={{ position: "fixed", inset: 0, bgcolor: "#faf9f7", display: "flex", flexDirection: "column" }}>
@@ -541,7 +532,7 @@ export default function Diagnosing() {
             {STEPS.map((s, i) => {
               const isDone = i < step;
               const isActive = i === step;
-              const isPending = i > step;
+              
               const isDebatePhase = i === 8;
               const isJudgePhase = i === 9;
 
