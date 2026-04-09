@@ -55,7 +55,8 @@ def _quick_image_max_out_tokens() -> int:
 
 
 def _quick_ocr_max_tokens() -> int:
-    return _env_int("QUICK_RECOGNIZE_OCR_MAX_TOKENS", 512, min_v=128, max_v=4096)
+    """快识 OCR：长 content 的 JSON 易截断；默认 2048，上限与网关对齐。"""
+    return _env_int("QUICK_RECOGNIZE_OCR_MAX_TOKENS", 2048, min_v=512, max_v=8192)
 
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024
@@ -418,16 +419,38 @@ def _sanitize_video_meta_narrative_content(result: dict) -> None:
         result["content_text"] = ""
 
 
-def _normalize_quick_recognition_fields(result: dict) -> None:
-    """统一快识字段：slot_type、extra_slots 及 cover/content 下的 title 规则。"""
+def _normalize_quick_recognition_fields(
+    result: dict,
+    *,
+    is_video_frame_fallback: bool = False,
+) -> None:
+    """
+    统一快识字段：slot_type、extra_slots 及 cover/content 下的 title 规则。
+    @param is_video_frame_fallback - 视频抽帧兜底：画面常被误判为 cover，若已有花字/字幕正文则不得清空 content_text
+    """
     slot_type = _normalize_slot_type(result.get("slot_type", ""))
     result["slot_type"] = slot_type
     result["extra_slots"] = _normalize_extra_slots(result.get("extra_slots"))
+    if is_video_frame_fallback and str(result.get("content_text", "")).strip():
+        result["slot_type"] = "content"
+        slot_type = "content"
     if slot_type == "cover":
         result["content_text"] = ""
     elif slot_type != "content":
         result["title"] = ""
         result["content_text"] = ""
+
+
+def _coerce_video_quick_slot_when_body_present(result: dict) -> None:
+    """视频快识成功返回前：有正文但 slot 为 cover/other 时改为 content，避免前端首轮忽略正文。"""
+    body = str(result.get("content_text", "")).strip()
+    if not body:
+        return
+    st = _normalize_slot_type(result.get("slot_type", ""))
+    if st in ("profile", "comments"):
+        return
+    if st != "content":
+        result["slot_type"] = "content"
 
 
 def _quick_payload_is_empty(result: dict) -> bool:
@@ -625,6 +648,12 @@ async def _ocr_supplement_quick_result(client, image_bytes: bytes, result: dict,
             result["title"] = ocr_title
         if not content_text and ocr_content:
             result["content_text"] = ocr_content
+        elif content_text and ocr_content:
+            # 视觉只摘到一句花字时，OCR 可能带回更长片段（含截断抢救）
+            if len(ocr_content) > len(content_text) + 12 or ocr_content.count("\n") > content_text.count(
+                "\n",
+            ):
+                result["content_text"] = ocr_content
         if not str(result.get("summary", "")).strip() and ocr_content:
             result["summary"] = ocr_content[:80]
     except Exception as ocr_error:
@@ -809,7 +838,7 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
                 )
                 if isinstance(fr, dict) and not fr.get("error"):
                     result = fr
-                    _normalize_quick_recognition_fields(result)
+                    _normalize_quick_recognition_fields(result, is_video_frame_fallback=True)
                     _sanitize_video_derived_title(result)
                     _sanitize_video_meta_narrative_content(result)
                     logger.info("视频快识抽帧视觉完成 slot_type=%s", result.get("slot_type"))
@@ -845,6 +874,7 @@ async def quick_recognize_video(request: Request, file: UploadFile = File(...)):
 
     _sanitize_video_derived_title(result)
     _sanitize_video_meta_narrative_content(result)
+    _coerce_video_quick_slot_when_body_present(result)
 
     logger.info(
         "视频快识最终结果: slot_type=%s title=%s category=%s",

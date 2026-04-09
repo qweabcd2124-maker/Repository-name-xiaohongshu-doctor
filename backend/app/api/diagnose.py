@@ -73,9 +73,18 @@ def _extract_first_video_frame(
             temp_path = temp_file.name
 
         capture = cv2.VideoCapture(temp_path)
-        ok, frame = capture.read()
+        if not capture.isOpened():
+            capture.release()
+            return None
+        frame = None
+        # 部分编码/首帧为黑屏时第一次 read 会失败，多读几帧再放弃
+        for _ in range(90):
+            ok, fr = capture.read()
+            if ok and fr is not None and getattr(fr, "size", 0) > 0:
+                frame = fr
+                break
         capture.release()
-        if not ok:
+        if frame is None:
             return None
 
         encode_ok, encoded = cv2.imencode(".jpg", frame)
