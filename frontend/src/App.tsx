@@ -10,6 +10,7 @@ import History from "./pages/History";
 import ScreenshotAnalysis from "./pages/ScreenshotAnalysis";
 import ToastContainer from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AnnouncementDialog from "./components/AnnouncementDialog";
 import "./index.css";
 
 /**
@@ -122,6 +123,7 @@ function App() {
         <BrowserRouter>
           <AnimatedRoutes />
           <ToastContainer />
+          <AnnouncementDialog />
         </BrowserRouter>
       </ErrorBoundary>
     </ThemeProvider>
