@@ -8,6 +8,7 @@ import {
   useMediaQuery, Alert,
 } from "@mui/material";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
+import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CategoryPicker from "../components/CategoryPicker";
 import UploadZone from "../components/UploadZone";
@@ -632,6 +633,14 @@ export default function Home() {
           >
             <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>历史</Box>
           </Button>
+          <Button startIcon={<EmailOutlinedIcon sx={{ fontSize: 14 }} />}
+            component="a" href="mailto:jmr@jiangmuran.com" size="small"
+            sx={{ color: "#999", fontSize: 12, fontWeight: 600, minWidth: "auto", px: 1, borderRadius: "8px",
+              textDecoration: "none",
+              "&:hover": { color: "#ff2442", bgcolor: "#fff0f2" } }}
+          >
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>联系</Box>
+          </Button>
         </Box>
       </Box>
 
@@ -886,6 +895,20 @@ export default function Home() {
           sx={{ fontSize: 11, color: "#bbb", textDecoration: "none", "&:hover": { color: "#ff2442" } }}
         >
           隐私政策
+        </Typography>
+        <Typography sx={{ fontSize: 11, color: "#ddd" }}>|</Typography>
+        <Typography
+          component="a" href="https://github.com/jiangmuran/noterx" target="_blank"
+          sx={{ fontSize: 11, color: "#bbb", textDecoration: "none", "&:hover": { color: "#ff2442" } }}
+        >
+          GitHub
+        </Typography>
+        <Typography sx={{ fontSize: 11, color: "#ddd" }}>|</Typography>
+        <Typography
+          component="a" href="mailto:jmr@jiangmuran.com"
+          sx={{ fontSize: 11, color: "#bbb", textDecoration: "none", "&:hover": { color: "#ff2442" } }}
+        >
+          合作联系 jmr@jiangmuran.com
         </Typography>
       </Box>
 

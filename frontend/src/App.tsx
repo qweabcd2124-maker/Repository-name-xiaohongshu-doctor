@@ -6,6 +6,7 @@ import theme from "./theme";
 import { pageTransition } from "./utils/motion";
 import ToastContainer from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
+import AnnouncementDialog from "./components/AnnouncementDialog";
 import "./index.css";
 
 /* ── Lazy-loaded pages ── */
@@ -147,6 +148,7 @@ function App() {
         <BrowserRouter basename="/app">
           <AnimatedRoutes />
           <ToastContainer />
+          <AnnouncementDialog />
         </BrowserRouter>
       </ErrorBoundary>
     </ThemeProvider>
