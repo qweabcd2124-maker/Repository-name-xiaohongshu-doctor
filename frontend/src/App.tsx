@@ -1,17 +1,30 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
 import theme from "./theme";
 import { pageTransition } from "./utils/motion";
-import Home from "./pages/Home";
-import Diagnosing from "./pages/Diagnosing";
-import Report from "./pages/Report";
-import History from "./pages/History";
-import ScreenshotAnalysis from "./pages/ScreenshotAnalysis";
 import ToastContainer from "./components/Toast";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AnnouncementDialog from "./components/AnnouncementDialog";
 import "./index.css";
+
+/* ── Lazy-loaded pages ── */
+const Home = lazy(() => import("./pages/Home"));
+const Diagnosing = lazy(() => import("./pages/Diagnosing"));
+const Report = lazy(() => import("./pages/Report"));
+const History = lazy(() => import("./pages/History"));
+const ScreenshotAnalysis = lazy(() => import("./pages/ScreenshotAnalysis"));
+
+/* ── Minimal loading fallback ── */
+function PageLoader() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+      <div style={{ width: 28, height: 28, border: "3px solid #eee", borderTopColor: "#ff2442", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
 
 /**
  * Animated route wrapper — gives every page enter/exit transitions
@@ -33,7 +46,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <Home />
+              <Suspense fallback={<PageLoader />}>
+                <Home />
+              </Suspense>
             </motion.div>
           }
         />
@@ -47,7 +62,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <Home />
+              <Suspense fallback={<PageLoader />}>
+                <Home />
+              </Suspense>
             </motion.div>
           }
         />
@@ -61,7 +78,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <Diagnosing />
+              <Suspense fallback={<PageLoader />}>
+                <Diagnosing />
+              </Suspense>
             </motion.div>
           }
         />
@@ -75,7 +94,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <Report />
+              <Suspense fallback={<PageLoader />}>
+                <Report />
+              </Suspense>
             </motion.div>
           }
         />
@@ -89,7 +110,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <History />
+              <Suspense fallback={<PageLoader />}>
+                <History />
+              </Suspense>
             </motion.div>
           }
         />
@@ -103,7 +126,9 @@ function AnimatedRoutes() {
               exit="exit"
               style={{ minHeight: "100vh" }}
             >
-              <ScreenshotAnalysis />
+              <Suspense fallback={<PageLoader />}>
+                <ScreenshotAnalysis />
+              </Suspense>
             </motion.div>
           }
         />
@@ -120,7 +145,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ErrorBoundary>
-        <BrowserRouter>
+        <BrowserRouter basename="/app">
           <AnimatedRoutes />
           <ToastContainer />
           <AnnouncementDialog />
