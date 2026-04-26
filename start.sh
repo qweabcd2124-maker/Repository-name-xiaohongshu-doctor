@@ -1,10 +1,10 @@
 #!/bin/bash
-# 薯医 NoteRx 一键启动脚本
+# 小红薯医生 一键启动脚本
 # Usage: ./start.sh
 
 set -e
 
-echo "💊 薯医 NoteRx 启动中..."
+echo "💊 小红薯医生 启动中..."
 
 # Check .env
 if [ ! -f backend/.env ] && [ ! -f .env ]; then
@@ -30,7 +30,7 @@ FRONTEND_PID=$!
 cd ..
 
 echo ""
-echo "✅ 薯医 NoteRx 已启动！"
+echo "✅ 小红薯医生 已启动！"
 echo "   前端: http://localhost:5173"
 echo "   后端: http://localhost:8000"
 echo "   API文档: http://localhost:8000/docs"

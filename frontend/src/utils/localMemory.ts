@@ -7,7 +7,7 @@
  */
 import type { DiagnoseResult } from "./api";
 
-const DB_NAME = "noterx_local_memory";
+const DB_NAME = "xiaohongshu-doctor_local_memory";
 const DB_VERSION = 1;
 const STORE = "diagnoses";
 
@@ -44,7 +44,7 @@ function openDb(): Promise<IDBDatabase> {
  */
 export async function migrateLegacyLocalStorage(): Promise<void> {
   try {
-    const raw = localStorage.getItem("noterx_history");
+    const raw = localStorage.getItem("xiaohongshu-doctor_history");
     if (!raw) return;
     const arr = JSON.parse(raw) as Array<{
       title: string;
@@ -56,7 +56,7 @@ export async function migrateLegacyLocalStorage(): Promise<void> {
       params?: Record<string, unknown>;
     }>;
     if (!Array.isArray(arr) || arr.length === 0) {
-      localStorage.removeItem("noterx_history");
+      localStorage.removeItem("xiaohongshu-doctor_history");
       return;
     }
     const db = await openDb();
@@ -80,7 +80,7 @@ export async function migrateLegacyLocalStorage(): Promise<void> {
       tx.oncomplete = () => res();
       tx.onerror = () => rej(tx.error ?? new Error("tx failed"));
     });
-    localStorage.removeItem("noterx_history");
+    localStorage.removeItem("xiaohongshu-doctor_history");
   } catch {
     /* 迁移失败不阻塞主流程 */
   }

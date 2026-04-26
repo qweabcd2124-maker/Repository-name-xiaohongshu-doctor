@@ -1,7 +1,7 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
 /**
- * NoteRx 主题：柔和层次、暖灰底、小红书红点缀，偏「耐看、舒服」。
+ * 小红薯医生 主题：柔和层次、暖灰底、小红书红点缀，偏「耐看、舒服」。
  */
 
 const themeOptions: ThemeOptions = {
@@ -145,10 +145,10 @@ const themeOptions: ThemeOptions = {
         {
           props: { variant: "contained" as const, color: "primary" as const },
           style: {
-            background: "linear-gradient(135deg, #ff3d5c 0%, #ff2442 50%, #e61e3d 100%)",
+            background: "#ff2442",
             boxShadow: "0 4px 16px rgba(255, 36, 66, 0.28)",
             "&:hover": {
-              background: "linear-gradient(135deg, #ff5269 0%, #ff3355 50%, #ff2442 100%)",
+              background: "#ff2442",
               boxShadow: "0 6px 22px rgba(255, 36, 66, 0.34)",
               transform: "translateY(-1px)",
             },

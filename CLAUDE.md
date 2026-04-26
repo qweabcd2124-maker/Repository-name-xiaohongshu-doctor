@@ -35,7 +35,7 @@ make ci
 
 ## Architecture
 
-NoteRx is a Xiaohongshu note diagnosis platform. Users submit a note (text/screenshot/link), and 5 AI agents analyze it through a multi-round debate.
+小红薯医生 is a Xiaohongshu note diagnosis platform. Users submit a note (text/screenshot/link), and 5 AI agents analyze it through a multi-round debate.
 
 ### Multi-Agent Flow (backend/app/agents/orchestrator.py)
 

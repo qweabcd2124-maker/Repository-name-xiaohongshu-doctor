@@ -179,7 +179,7 @@ export default function Diagnosing() {
   const tips = (params ? TIPS[params.category] : null) || TIPS._default;
 
   useEffect(() => {
-    document.title = "诊断中... - 薯医 NoteRx";
+    document.title = "诊断中... - 小红薯医生";
     if (!params) { navigate("/app"); return; }
     let cancelled = false;
     const abortController = new AbortController();

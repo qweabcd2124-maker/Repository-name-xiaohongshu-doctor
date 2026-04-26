@@ -72,6 +72,7 @@ class VideoAnalyzer:
                 },
             ],
             "temperature": float(os.getenv("LLM_TEMPERATURE", "0.3")),
+            "stream": False,
         }
         max_out = int(os.getenv("LLM_MAX_COMPLETION_TOKENS", "1024"))
         if _is_mimo_openai_compat():

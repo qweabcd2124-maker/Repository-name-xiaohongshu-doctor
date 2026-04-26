@@ -196,7 +196,7 @@ async def main():
         # 添加元信息
         header = f"""---
 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}
-数据来源: NoteRx 研究数据库
+数据来源: 小红薯医生 研究数据库
 分析方法: 传统统计 (Track A) + LLM 深度分析 (Track B)
 模型: {MODEL_PRO}
 ---

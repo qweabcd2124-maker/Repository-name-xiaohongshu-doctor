@@ -49,7 +49,7 @@ export default function Report() {
   } | null;
 
   useEffect(() => {
-    document.title = `诊断报告 - 薯医 NoteRx`;
+    document.title = `诊断报告 - 小红薯医生`;
     if (!state || state.isFallback) return;
     const { report, params } = state;
     void (async () => {
@@ -425,18 +425,6 @@ export default function Report() {
           <motion.div {...sectionAnim(6)}>
           <Typography sx={{ textAlign: "center", fontSize: 12, color: "#ccc", mt: 3 }}>
             本报告由 AI 多 Agent 协作生成，仅供参考
-          </Typography>
-          <Typography sx={{ textAlign: "center", fontSize: 11, color: "#ccc", mt: 1 }}>
-            NoteRx 是公益开源项目 · 合作联系{" "}
-            <Typography component="a" href="mailto:jmr@jiangmuran.com"
-              sx={{ fontSize: 11, color: "#ddd", textDecoration: "none", fontWeight: 600, "&:hover": { color: "#ff2442" } }}>
-              jmr@jiangmuran.com
-            </Typography>
-            {" · "}
-            <Typography component="a" href="https://github.com/jiangmuran/noterx" target="_blank"
-              sx={{ fontSize: 11, color: "#ddd", textDecoration: "none", fontWeight: 600, "&:hover": { color: "#ff2442" } }}>
-              GitHub
-            </Typography>
           </Typography>
           </motion.div>
         </Box>

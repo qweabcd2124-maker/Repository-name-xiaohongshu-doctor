@@ -9,8 +9,8 @@ import paramiko
 HOST = "38.175.195.71"
 USER = "root"
 PASS = "lFjTQo8NXHN7TfCI"
-REMOTE_DIR = "/opt/noterx"
-FRONTEND_DIR = "/www/wwwroot/noterx.muran.tech"
+REMOTE_DIR = "/opt/xiaohongshu-doctor"
+FRONTEND_DIR = "/www/wwwroot/xiaohongshu-doctor.muran.tech"
 
 # -- helper --
 def run(ssh, cmd, check=True):
@@ -54,7 +54,7 @@ buf.seek(0)
 print(f"  Packed {len(buf.getvalue())/1024:.0f} KB")
 
 # ============ 3. Upload ============
-remote_tar = "/tmp/noterx_deploy.tar.gz"
+remote_tar = "/tmp/xiaohongshu-doctor_deploy.tar.gz"
 print("[3/6] Uploading...")
 sftp.putfo(buf, remote_tar)
 print("  OK")
@@ -104,13 +104,13 @@ if os.path.isfile(local_env):
 # ============ 6. Systemd service ============
 print("[6/6] Setting up systemd service...")
 SERVICE = """[Unit]
-Description=NoteRx Backend
+Description=小红薯医生 Backend
 After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/noterx/backend
-ExecStart=/opt/noterx/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+WorkingDirectory=/opt/xiaohongshu-doctor/backend
+ExecStart=/opt/xiaohongshu-doctor/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -118,14 +118,14 @@ Environment=PYTHONUNBUFFERED=1
 [Install]
 WantedBy=multi-user.target
 """
-with sftp.open("/etc/systemd/system/noterx.service", "w") as f:
+with sftp.open("/etc/systemd/system/xiaohongshu-doctor.service", "w") as f:
     f.write(SERVICE)
 
 run(ssh, "systemctl daemon-reload")
-run(ssh, "systemctl enable noterx")
-run(ssh, "systemctl restart noterx")
+run(ssh, "systemctl enable xiaohongshu-doctor")
+run(ssh, "systemctl restart xiaohongshu-doctor")
 time.sleep(3)
-run(ssh, "systemctl status noterx --no-pager -l", check=False)
+run(ssh, "systemctl status xiaohongshu-doctor --no-pager -l", check=False)
 
 # Health check
 out, _, _ = run(ssh, "curl -s http://127.0.0.1:8000/api/health", check=False)
@@ -134,7 +134,7 @@ print("=" * 50)
 print("DEPLOY DONE!")
 print(f"  Backend API: http://127.0.0.1:8000 (Nginx proxy)")
 print(f"  Frontend:    {FRONTEND_DIR}")
-print(f"  Admin:       https://noterx.muran.tech/admin")
+print(f"  Admin:       https://xiaohongshu-doctor.muran.tech/admin")
 print(f"  Password:    pageone")
 print("")
 print("Nginx config needed (see below):")

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-NoteRx 内容评分模型 (Model A) — 独立可运行程序
+小红薯医生 内容评分模型 (Model A) — 独立可运行程序
 基于 874 条真实小红书笔记数据训练，双轨分析（传统统计 + LLM）。
 
 Usage:
     # 评分单条笔记
-    python noterx_scoring_model.py --title "5分钟学会这个做法" --content "今天教大家..." --category food --tags 5 --images 6
+    python xiaohongshu-doctor_scoring_model.py --title "5分钟学会这个做法" --content "今天教大家..." --category food --tags 5 --images 6
 
     # 批量评分 CSV
-    python noterx_scoring_model.py --csv input.csv --output scored.csv
+    python xiaohongshu-doctor_scoring_model.py --csv input.csv --output scored.csv
 
     # 输出模型参数
-    python noterx_scoring_model.py --show-params
+    python xiaohongshu-doctor_scoring_model.py --show-params
 
 研究方法:
     Track A: Spearman 相关性 + 线性回归 + K-Means 聚类 + Kruskal-Wallis 检验
@@ -291,7 +291,7 @@ def score_note(features: NoteFeatures) -> dict:
 # ═══════════════════════════════════════════════════════════════
 
 def show_params():
-    print("NoteRx Model A — 品类评分参数")
+    print("小红薯医生 Model A — 品类评分参数")
     print("=" * 60)
     print(f"训练数据: 874 条真实小红书笔记 (5 品类有数据)")
     print(f"方法: Spearman 相关 + 线性回归 + K-Means 聚类")
@@ -321,7 +321,7 @@ def score_single(args):
     result = score_note(features)
 
     print(f"\n{'='*50}")
-    print(f"NoteRx 笔记诊断报告")
+    print(f"小红薯医生 笔记诊断报告")
     print(f"{'='*50}")
     print(f"品类: {features.category}")
     print(f"标题: {features.title[:50]}{'...' if len(features.title)>50 else ''}")
@@ -372,7 +372,7 @@ def score_csv(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="NoteRx 内容评分模型 (Model A)")
+    parser = argparse.ArgumentParser(description="小红薯医生 内容评分模型 (Model A)")
     parser.add_argument("--title", help="笔记标题")
     parser.add_argument("--content", help="笔记正文", default="")
     parser.add_argument("--category", default="lifestyle", choices=list(MODEL_PARAMS.keys()))

@@ -440,7 +440,7 @@ export default function UploadZone({
                   fontSize: compact ? 14 : 16,
                   lineHeight: 1.3, mb: 0.5,
                 }}>
-                  拖入截图开始诊断
+                  上传笔记截图
                 </Typography>
                 <Typography sx={{
                   color: "#999",

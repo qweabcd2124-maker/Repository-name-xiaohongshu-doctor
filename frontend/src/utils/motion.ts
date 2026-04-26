@@ -1,7 +1,7 @@
 import { type Variants, type Transition } from "framer-motion";
 
 /* ============================================================
-   NoteRx Framer Motion Presets
+   小红薯医生 Framer Motion Presets
    Reusable animation variants and transition configs
    ============================================================ */
 

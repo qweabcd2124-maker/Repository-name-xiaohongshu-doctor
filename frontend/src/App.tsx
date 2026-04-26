@@ -138,7 +138,7 @@ function AnimatedRoutes() {
 }
 
 /**
- * NoteRx Root Component
+ * 小红薯医生 Root Component
  */
 function App() {
   return (

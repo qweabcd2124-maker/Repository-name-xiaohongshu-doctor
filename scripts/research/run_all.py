@@ -64,7 +64,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("NoteRx 研究 Pipeline — 全流程")
+    print("小红薯医生 研究 Pipeline — 全流程")
     print("=" * 60)
 
     t_start = time.time()

@@ -11,16 +11,12 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import GitHubIcon from "@mui/icons-material/GitHub";
-import LanguageIcon from "@mui/icons-material/Language";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
-import HandshakeOutlinedIcon from "@mui/icons-material/HandshakeOutlined";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import WhatshotIcon from "@mui/icons-material/Whatshot";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CodeIcon from "@mui/icons-material/Code";
 
-const STORAGE_KEY = "noterx_announcement_seen_v1";
+const STORAGE_KEY = "xiaohongshu-doctor_announcement_seen_v1";
 
 const WaveSvg = () => (
   <svg
@@ -31,83 +27,6 @@ const WaveSvg = () => (
     <path d="M0 40 C150 80 350 0 600 40 L600 80 L0 80Z" fill="#fff" />
   </svg>
 );
-
-function LinkCard({
-  icon,
-  label,
-  sublabel,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  sublabel: string;
-  href: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ textDecoration: "none", flex: 1, minWidth: 0 }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          gap: 1.5,
-          px: 2,
-          py: 1.5,
-          borderRadius: "14px",
-          border: "1px solid rgba(0,0,0,0.06)",
-          background: "#fafafa",
-          transition: "all 0.22s ease",
-          cursor: "pointer",
-          "&:hover": {
-            borderColor: "rgba(255,36,66,0.25)",
-            background: "rgba(255,36,66,0.03)",
-            transform: "translateY(-2px)",
-            boxShadow: "0 4px 16px rgba(255,36,66,0.08)",
-          },
-        }}
-      >
-        <Box
-          sx={{
-            width: 38,
-            height: 38,
-            borderRadius: "10px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, rgba(255,36,66,0.08), rgba(255,107,129,0.06))",
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </Box>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            sx={{ fontWeight: 700, fontSize: "0.82rem", color: "#1f1f1f", lineHeight: 1.3 }}
-          >
-            {label}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: "0.7rem",
-              color: "#999",
-              fontWeight: 500,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {sublabel}
-          </Typography>
-        </Box>
-        <OpenInNewIcon sx={{ fontSize: 14, color: "#ccc", flexShrink: 0 }} />
-      </Box>
-    </a>
-  );
-}
 
 const STATS = [
   {
@@ -235,7 +154,7 @@ export default function AnnouncementDialog() {
               letterSpacing: "-0.5px", mb: 1,
             }}
           >
-            NoteRx 是公益项目
+            小红薯医生 是公益项目
           </Typography>
           <Typography
             sx={{
@@ -294,64 +213,6 @@ export default function AnnouncementDialog() {
             </Box>
           ))}
         </Box>
-
-        {/* Links: GitHub + Homepage */}
-        <Box
-          sx={{
-            display: "flex", gap: 1.5, mb: 2.5,
-            flexDirection: { xs: "column", sm: "row" },
-          }}
-        >
-          <LinkCard
-            icon={<GitHubIcon sx={{ fontSize: 20, color: "#333" }} />}
-            label="开源仓库"
-            sublabel="github.com/jiangmuran/noterx"
-            href="https://github.com/jiangmuran/noterx"
-          />
-          <LinkCard
-            icon={<LanguageIcon sx={{ fontSize: 20, color: "#ff2442" }} />}
-            label="开发者主页"
-            sublabel="jiangmuran.com"
-            href="https://jiangmuran.com"
-          />
-        </Box>
-
-        {/* Sustainability note */}
-        <Box
-          sx={{
-            background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
-            border: "1px solid rgba(245,158,11,0.18)",
-            borderRadius: "14px", px: 2.5, py: 2, mb: 2.5,
-          }}
-        >
-          <Typography
-            sx={{ fontSize: "0.85rem", color: "#92400e", lineHeight: 1.75, fontWeight: 500 }}
-          >
-            由于服务器与 AI Token 成本持续增长，项目可能会在赞助资源耗尽后暂停服务。如果您觉得 NoteRx 有价值，欢迎通过赞助或合作帮助我们走得更远。
-          </Typography>
-        </Box>
-
-        {/* Collaboration */}
-        <Box
-          sx={{
-            display: "flex", alignItems: "flex-start", gap: 1.5,
-            px: 2.5, py: 2, borderRadius: "14px",
-            border: "1px solid rgba(0,0,0,0.05)", background: "#fcfcfc", mb: 2.5,
-          }}
-        >
-          <HandshakeOutlinedIcon
-            sx={{ color: "#ff2442", mt: 0.2, fontSize: 22, flexShrink: 0 }}
-          />
-          <Box>
-            <Typography sx={{ fontWeight: 700, fontSize: "0.92rem", mb: 0.5, color: "#1f1f1f" }}>
-              广告位招租 · 有偿合作
-            </Typography>
-            <Typography sx={{ fontSize: "0.82rem", color: "#888", lineHeight: 1.7 }}>
-              我们开放广告位与商业合作。如有赞助、推广、技术合作意向，欢迎来信并附上联系方式、合作事由与意向报价。
-            </Typography>
-          </Box>
-        </Box>
-
         {/* Contact email */}
         <Box
           sx={{
@@ -363,14 +224,7 @@ export default function AnnouncementDialog() {
         >
           <EmailOutlinedIcon sx={{ fontSize: 16, color: "#ff6b81" }} />
           <Typography sx={{ fontSize: "0.82rem", color: "#666" }}>
-            合作联系{" "}
-            <a
-              href="mailto:jmr@jiangmuran.com"
-              style={{ color: "#ff2442", fontWeight: 700, textDecoration: "none" }}
-            >
-              jmr@jiangmuran.com
-            </a>
-          </Typography>
+            微信：<strong>kevin88855</strong>　邮箱：<a href="mailto:928766904@qq.com" style={{ color: "#ff2442", fontWeight: 700, textDecoration: "none" }}>928766904@qq.com</a></Typography>
         </Box>
 
         {/* CTA */}
@@ -385,7 +239,7 @@ export default function AnnouncementDialog() {
             borderRadius: "14px", textTransform: "none",
           }}
         >
-          好的，开始使用 NoteRx
+          好的，开始使用 小红薯医生
         </Button>
 
         <Typography

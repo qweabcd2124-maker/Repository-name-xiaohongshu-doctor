@@ -1,4 +1,4 @@
-﻿"""
+"""
 多维度截图上传 + AI 快速识别 + 全量深度分析 API
 支持封面、正文、主页、评论区截图上传及视频录屏。
 """
@@ -309,6 +309,7 @@ async def _vision_call(
                 ],
             },
         ],
+        "stream": False,
     }
     if _is_mimo_openai_compat():
         kwargs["max_completion_tokens"] = out_cap
@@ -599,6 +600,7 @@ async def _video_url_quick_call(client, video_url: str) -> dict:
             },
         ],
         "temperature": min(float(os.getenv("LLM_TEMPERATURE", "0.3")), 0.15),
+        "stream": False,
     }
     if _is_mimo_openai_compat():
         kwargs["max_completion_tokens"] = out_cap
@@ -649,6 +651,7 @@ async def _video_url_subtitle_transcript_call(client, video_url: str) -> list[st
             },
         ],
         "temperature": min(float(os.getenv("LLM_TEMPERATURE", "0.3")), 0.1),
+        "stream": False,
     }
     if _is_mimo_openai_compat():
         kwargs["max_completion_tokens"] = out_cap

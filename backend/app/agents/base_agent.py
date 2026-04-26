@@ -239,6 +239,7 @@ class BaseAgent:
                 "model": self.model,
                 "messages": messages,
                 "temperature": float(os.getenv("LLM_TEMPERATURE", "0")),
+                "stream": False,
             }
             # seed for reproducibility (if supported by provider)
             seed_val = os.getenv("LLM_SEED", "")
@@ -330,6 +331,7 @@ class BaseAgent:
                     },
                 ],
                 "temperature": temp,
+                "stream": False,
             }
             if mimo:
                 kwargs["max_completion_tokens"] = max_out

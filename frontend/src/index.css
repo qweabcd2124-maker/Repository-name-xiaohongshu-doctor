@@ -1,4 +1,8 @@
-/* NoteRx — Minimal Global Styles */
+:root {
+  --primary: #ff2442;
+}
+
+/* 小红薯医生 — Minimal Global Styles */
 
 *,
 *::before,

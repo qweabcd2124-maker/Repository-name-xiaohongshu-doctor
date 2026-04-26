@@ -43,7 +43,7 @@ const SLOTS: SlotConfig[] = [
 
 const LINK_REGEX = /https?:\/\/\S+/gi;
 const ORDERED_SLOT_KEYS: SlotType[] = ["cover", "content", "profile", "comments"];
-const DRAFT_KEY = "noterx_screenshot_draft_v1";
+const DRAFT_KEY = "xiaohongshu-doctor_screenshot_draft_v1";
 
 /**
  * 截图多维度分析页

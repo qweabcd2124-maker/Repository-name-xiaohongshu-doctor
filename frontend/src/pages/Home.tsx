@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -8,7 +8,6 @@ import {
   useMediaQuery, Alert,
 } from "@mui/material";
 import HistoryOutlined from "@mui/icons-material/HistoryOutlined";
-import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CategoryPicker from "../components/CategoryPicker";
 import UploadZone from "../components/UploadZone";
@@ -135,7 +134,7 @@ export default function Home() {
   const recognizeInFlightRef = useRef<Set<string>>(new Set());
   const prevPendingRecognitionRef = useRef(false);
 
-  useEffect(() => { document.title = "薯医 NoteRx"; }, []);
+  useEffect(() => { document.title = "小红薯医生"; }, []);
 
   useEffect(() => {
     void getApiHealth().then(setApiReachable);
@@ -606,7 +605,7 @@ export default function Home() {
               <Typography sx={{ color: "#fff", fontSize: 10, fontWeight: 800, fontFamily: "Inter" }}>Rx</Typography>
             </Box>
             <Typography sx={{ fontSize: 14, fontWeight: 800, color: "#262626", letterSpacing: "-0.02em" }}>
-              薯医
+              小红薯医生
             </Typography>
           </Box>
           {/* Desktop: inline description */}
@@ -614,7 +613,7 @@ export default function Home() {
             display: { xs: "none", md: "block" },
             fontSize: 12, color: "#999", fontWeight: 500,
           }}>
-            基于大量数据训练用户画像和流量预测模型
+            让每一篇笔记都有爆款体质
           </Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -632,14 +631,6 @@ export default function Home() {
               "&:hover": { color: "#262626", bgcolor: "#f5f5f5" } }}
           >
             <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>历史</Box>
-          </Button>
-          <Button startIcon={<EmailOutlinedIcon sx={{ fontSize: 14 }} />}
-            component="a" href="mailto:jmr@jiangmuran.com" size="small"
-            sx={{ color: "#999", fontSize: 12, fontWeight: 600, minWidth: "auto", px: 1, borderRadius: "8px",
-              textDecoration: "none",
-              "&:hover": { color: "#ff2442", bgcolor: "#fff0f2" } }}
-          >
-            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>联系</Box>
           </Button>
         </Box>
       </Box>
@@ -678,7 +669,7 @@ export default function Home() {
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
               <Box>
                 <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#262626" }}>
-                  上传笔记素材
+                  上传笔记截图
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "#999", mt: 0.25 }}>
                   把小红书截图拖进来，AI 自动识别标题、正文、分类
@@ -897,19 +888,6 @@ export default function Home() {
           隐私政策
         </Typography>
         <Typography sx={{ fontSize: 11, color: "#ddd" }}>|</Typography>
-        <Typography
-          component="a" href="https://github.com/jiangmuran/noterx" target="_blank"
-          sx={{ fontSize: 11, color: "#bbb", textDecoration: "none", "&:hover": { color: "#ff2442" } }}
-        >
-          GitHub
-        </Typography>
-        <Typography sx={{ fontSize: 11, color: "#ddd" }}>|</Typography>
-        <Typography
-          component="a" href="mailto:jmr@jiangmuran.com"
-          sx={{ fontSize: 11, color: "#bbb", textDecoration: "none", "&:hover": { color: "#ff2442" } }}
-        >
-          合作联系 jmr@jiangmuran.com
-        </Typography>
       </Box>
 
     </Box>

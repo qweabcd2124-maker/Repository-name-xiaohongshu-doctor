@@ -6,6 +6,7 @@ python-multipart>=0.0.20
 openai>=1.68.0
 anthropic>=0.49.0
 opencv-python-headless>=4.11.0
+numpy>=2.0.0
 Pillow>=11.1.0
 jieba>=0.42.1
 aiofiles>=24.1.0

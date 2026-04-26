@@ -1,6 +1,8 @@
 <div align="center">
 
-# 薯医 NoteRx
+# 小红薯医生
+
+一个基于 AI 的小红书内容诊断工具
 
 ### Multi-Agent Collaborative Diagnosis Engine for Xiaohongshu
 
@@ -8,7 +10,7 @@
 
 <br>
 
-[**立即在线体验**](https://noterx.muran.tech) &nbsp;&nbsp;|&nbsp;&nbsp; [研究白皮书](https://noterx.muran.tech/) &nbsp;&nbsp;|&nbsp;&nbsp; [技术架构](#技术架构)
+[**立即在线体验**](https://xiaohongshu-doctor.muran.tech) &nbsp;&nbsp;|&nbsp;&nbsp; [研究白皮书](https://xiaohongshu-doctor.muran.tech/) &nbsp;&nbsp;|&nbsp;&nbsp; [技术架构](#技术架构)
 
 <br>
 
@@ -18,9 +20,9 @@
 
 ---
 
-## 为什么是薯医
+## 为什么是小红薯医生
 
-| | 传统工具 | 薯医 NoteRx |
+| | 传统工具 | 小红薯医生 |
 |---|---|---|
 | **评分依据** | 主观经验 / 单模型打分 | 874 条真实笔记回归分析 → 5 品类差异化权重 |
 | **诊断方式** | 单次 GPT 调用 | 5 Agent 并行诊断 → 交叉质疑辩论 → 裁判综合 |
@@ -31,7 +33,7 @@
 
 ## 在线体验
 
-**https://noterx.muran.tech**
+**https://xiaohongshu-doctor.muran.tech**
 
 1. 打开链接 → 拖入小红书笔记截图（支持多张拼接）
 2. AI 自动识别标题、正文、分类（< 30s）
@@ -97,7 +99,7 @@ Round 1: 并行诊断                    Round 2: 交叉辩论                Ro
 
 ```bash
 # 克隆
-git clone https://github.com/jiangmuran/noterx.git && cd noterx
+git clone https://github.com/jiangmuran/xiaohongshu-doctor.git && cd xiaohongshu-doctor
 
 # 配置
 cp .env.example backend/.env  # 编辑填入 API Key
@@ -122,7 +124,7 @@ Apache License 2.0
 
 <div align="center">
 
-**[立即体验 →](https://noterx.muran.tech)**
+**[立即体验 →](https://xiaohongshu-doctor.muran.tech)**
 
 *小红书黑客松巅峰赛 · Topic Star #1*
 

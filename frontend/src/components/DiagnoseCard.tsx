@@ -29,13 +29,13 @@ export default function DiagnoseCard({ report, title }: Props) {
       const blob = await generateImage();
       if (!blob) return;
       if (navigator.share && navigator.canShare?.({ files: [new File([blob], "card.png", { type: "image/png" })] })) {
-        const file = new File([blob], `薯医诊断-${title.slice(0, 10)}.png`, { type: "image/png" });
-        await navigator.share({ files: [file], title: "薯医诊断卡片" });
+        const file = new File([blob], `小红薯医生诊断-${title.slice(0, 10)}.png`, { type: "image/png" });
+        await navigator.share({ files: [file], title: "小红薯医生诊断卡片" });
         return;
       }
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.download = `薯医诊断-${title.slice(0, 10)}.png`;
+      link.download = `小红薯医生诊断-${title.slice(0, 10)}.png`;
       link.href = url;
       link.click();
       URL.revokeObjectURL(url);
@@ -83,7 +83,7 @@ export default function DiagnoseCard({ report, title }: Props) {
           padding: "20px 24px 16px",
           color: "#fff",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, marginBottom: 8 }}>薯医诊断</div>
+          <div style={{ fontSize: 11, fontWeight: 600, opacity: 0.8, marginBottom: 8 }}>小红薯医生诊断</div>
           <table style={{ width: "100%", borderCollapse: "collapse" }}><tbody><tr>
             <td style={{ verticalAlign: "top", paddingRight: 12 }}>
               <div style={{
@@ -159,9 +159,9 @@ export default function DiagnoseCard({ report, title }: Props) {
               background: "linear-gradient(135deg, #ff5c6f, #e61e3d)",
               display: "inline-block", marginRight: 4, verticalAlign: "middle",
             }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#262626" }}>薯医 NoteRx</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#262626" }}>小红薯医生</span>
           </div>
-          <span style={{ fontSize: 9, color: "#bbb" }}>noterx.muran.tech</span>
+          <span style={{ fontSize: 9, color: "#bbb" }}>xiaohongshu-doctor.muran.tech</span>
         </div>
       </div>
     </Box>
